@@ -18,21 +18,20 @@
       --border: #dfe6e9;
       --r: 16px;
       --shadow: 0 4px 20px rgba(108,92,231,.1);
+      --teal: #00b894;
+      --orange: #e17055;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding-bottom: 100px; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; padding-bottom: 160px; }
 
-    header {
-      background: var(--primary); color: #fff;
-      padding: 24px 16px 28px; text-align: center;
-    }
+    header { background: var(--primary); color: #fff; padding: 20px 16px 22px; text-align: center; }
     header h1 { font-size: 1.5rem; font-weight: 800; }
-    .stats-bar { display: flex; justify-content: center; gap: 12px; margin-top: 14px; flex-wrap: wrap; }
-    .chip { background: rgba(255,255,255,.22); border-radius: 20px; padding: 6px 14px; font-size: .83rem; }
+    .stats-bar { display: flex; justify-content: center; gap: 7px; margin-top: 11px; flex-wrap: wrap; }
+    .chip { background: rgba(255,255,255,.22); border-radius: 20px; padding: 5px 11px; font-size: .76rem; }
     .chip strong { font-weight: 700; }
 
     .fab {
-      position: fixed; bottom: 24px; right: 24px;
+      position: fixed; bottom: 76px; right: 24px;
       width: 64px; height: 64px; border-radius: 50%;
       background: var(--primary); color: #fff; font-size: 2rem; border: none;
       box-shadow: 0 6px 24px rgba(108,92,231,.45);
@@ -42,29 +41,45 @@
     }
     .fab:active { transform: scale(.92); }
 
+    /* ── Bottom nav ── */
+    .bottom-nav {
+      position: fixed; bottom: 0; left: 0; right: 0; height: 60px;
+      background: var(--card); border-top: 1px solid var(--border);
+      display: flex; z-index: 100; box-shadow: 0 -2px 12px rgba(0,0,0,.06);
+    }
+    .nav-btn {
+      flex: 1; border: none; background: none; cursor: pointer; font-family: inherit;
+      font-size: .72rem; font-weight: 600; color: var(--muted);
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
+      transition: color .15s;
+    }
+    .nav-btn .nav-icon { font-size: 1.4rem; }
+    .nav-btn.active { color: var(--primary); }
+
+    /* ── Journal ── */
     main { padding: 16px; max-width: 600px; margin: 0 auto; }
     .day-group { margin-bottom: 22px; }
     .day-label { font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); margin-bottom: 8px; padding: 0 4px; }
-
     .entry-card {
       background: var(--card); border-radius: var(--r);
-      padding: 14px 16px; margin-bottom: 8px;
-      box-shadow: var(--shadow);
+      padding: 14px 16px; margin-bottom: 8px; box-shadow: var(--shadow);
       display: flex; align-items: center; gap: 13px;
       cursor: pointer; transition: transform .1s;
     }
     .entry-card:active { transform: scale(.98); }
     .entry-icon { width: 46px; height: 46px; border-radius: 13px; display: flex; align-items: center; justify-content: center; font-size: 1.45rem; flex-shrink: 0; }
-    .icon-sein_gauche { background: #ffeef5; }
-    .icon-sein_droit  { background: #f0effe; }
-    .icon-les_deux    { background: #fff9e6; }
-    .icon-biberon     { background: #e6faf5; }
+    .icon-sein_gauche    { background: #ffeef5; }
+    .icon-sein_droit     { background: #f0effe; }
+    .icon-les_deux       { background: #fff9e6; }
+    .icon-biberon        { background: #e6faf5; }
+    .icon-biberon_poudre { background: #fff0eb; }
     .entry-body { flex: 1; min-width: 0; }
     .entry-type { font-weight: 700; font-size: .95rem; margin-bottom: 2px; }
     .entry-meta { font-size: .81rem; color: var(--muted); }
     .entry-comment { font-size: .81rem; color: var(--muted); font-style: italic; margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .entry-time { font-size: 1.15rem; font-weight: 800; color: var(--primary); flex-shrink: 0; }
 
+    /* ── Modal ── */
     .overlay {
       position: fixed; inset: 0; background: rgba(0,0,0,.38);
       z-index: 200; display: flex; align-items: flex-end; justify-content: center;
@@ -106,6 +121,18 @@
     .type-btn.sel-les_deux    { border-color: #e0ac00; background: #fff9e6; color: #7a5800; }
     .type-btn.sel-biberon     { border-color: #00b894; background: #e6faf5; color: #006e59; }
 
+    /* Biberon sous-type */
+    .bib-type-row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .bib-btn {
+      padding: 11px 8px; border: 2px solid var(--border); border-radius: 13px;
+      background: #fff; cursor: pointer; font-family: inherit;
+      font-size: .83rem; font-weight: 600; color: var(--text);
+      transition: all .14s; display: flex; flex-direction: column; align-items: center; gap: 4px;
+    }
+    .bib-btn span { font-size: 1.3rem; }
+    .bib-btn.sel-maternel { border-color: #00b894; background: #e6faf5; color: #006e59; }
+    .bib-btn.sel-poudre   { border-color: #e17055; background: #fff0eb; color: #a84432; }
+
     .cond { display: none; }
     .cond.show { display: block; }
 
@@ -116,12 +143,47 @@
     .btn-cancel  { background: var(--bg); color: var(--text); }
     .btn-delete  { width: 100%; margin-top: 10px; background: #fff0f0; color: #c0392b; }
 
-    .sync-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #00b894; margin-right: 6px; vertical-align: middle; }
+    .sync-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #00b894; margin-right: 4px; vertical-align: middle; }
     .sync-dot.off { background: #fdcb6e; }
 
     .empty { text-align: center; padding: 70px 20px; color: var(--muted); }
     .empty .ei { font-size: 4rem; margin-bottom: 16px; }
     .empty p { font-size: 1rem; line-height: 1.6; }
+
+    /* ── Stats view ── */
+    .stats-page { padding: 16px; max-width: 600px; margin: 0 auto; }
+
+    .period-row, .chart-mode-row { display: flex; gap: 8px; margin-bottom: 12px; }
+    .period-btn, .mode-btn {
+      flex: 1; padding: 10px; border: 2px solid var(--border); border-radius: 12px;
+      background: #fff; cursor: pointer; font-family: inherit;
+      font-size: .85rem; font-weight: 700; color: var(--muted); transition: all .14s;
+    }
+    .mode-btn { font-size: .8rem; padding: 8px; border-radius: 10px; }
+    .period-btn.active { border-color: var(--primary); background: var(--primary); color: #fff; }
+    .mode-btn.active   { border-color: var(--primary); background: var(--bg); color: var(--primary); }
+
+    .chart-legend { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 10px; }
+    .legend-item { display: flex; align-items: center; gap: 5px; font-size: .75rem; color: var(--muted); font-weight: 600; }
+    .legend-dot { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+
+    .chart-scroll-wrap {
+      background: var(--card); border-radius: var(--r);
+      padding: 14px 10px 8px; box-shadow: var(--shadow);
+      overflow-x: auto; margin-bottom: 20px;
+      -webkit-overflow-scrolling: touch;
+    }
+    .chart-scroll-wrap svg { display: block; }
+
+    .day-stat-card { background: var(--card); border-radius: var(--r); padding: 14px 16px; margin-bottom: 10px; box-shadow: var(--shadow); }
+    .dsc-date { font-weight: 700; font-size: .9rem; margin-bottom: 10px; }
+    .dsc-row { display: flex; flex-wrap: wrap; gap: 8px; }
+    .dsc-item { background: var(--bg); border-radius: 10px; padding: 8px 12px; min-width: 90px; flex: 1; }
+    .dsc-item-label { font-size: .68rem; text-transform: uppercase; letter-spacing: .4px; color: var(--muted); font-weight: 700; margin-bottom: 4px; }
+    .dsc-item-val { font-size: 1.05rem; font-weight: 800; color: var(--text); }
+    .dsc-item.c-sein     .dsc-item-val { color: #a29bfe; }
+    .dsc-item.c-maternel .dsc-item-val { color: var(--teal); }
+    .dsc-item.c-poudre   .dsc-item-val { color: var(--orange); }
   </style>
 </head>
 <body>
@@ -131,19 +193,52 @@
   <div class="stats-bar">
     <div class="chip">Aujourd'hui&nbsp;: <strong id="cnt">0</strong></div>
     <div class="chip">Dernière&nbsp;: <strong id="ago">—</strong></div>
+    <div class="chip">Dernier poudre&nbsp;: <strong id="ago-poudre">—</strong></div>
     <div class="chip"><span class="sync-dot off" id="dot"></span><span id="sync-lbl">Connexion…</span></div>
   </div>
 </header>
 
-<main id="list">
-  <div class="empty" id="empty">
-    <div class="ei">🤱</div>
-    <p>Aucune tétée enregistrée.<br>Appuyez sur <strong>+</strong> pour commencer !</p>
+<!-- Journal -->
+<div id="view-journal">
+  <main id="list">
+    <div class="empty" id="empty">
+      <div class="ei">🤱</div>
+      <p>Aucune tétée enregistrée.<br>Appuyez sur <strong>+</strong> pour commencer !</p>
+    </div>
+  </main>
+</div>
+
+<!-- Stats -->
+<div id="view-stats" style="display:none">
+  <div class="stats-page">
+    <div class="period-row">
+      <button class="period-btn active" data-period="7">7 jours</button>
+      <button class="period-btn" data-period="30">30 jours</button>
+    </div>
+    <div class="chart-mode-row">
+      <button class="mode-btn active" data-mode="count">Nb tétées</button>
+      <button class="mode-btn" data-mode="volume">Volume ml</button>
+    </div>
+    <div class="chart-legend" id="chart-legend"></div>
+    <div class="chart-scroll-wrap">
+      <div id="chart-svg"></div>
+    </div>
+    <div id="day-cards"></div>
   </div>
-</main>
+</div>
 
 <button class="fab" id="fab">+</button>
 
+<nav class="bottom-nav">
+  <button class="nav-btn active" id="nav-journal">
+    <span class="nav-icon">🍼</span>Journal
+  </button>
+  <button class="nav-btn" id="nav-stats">
+    <span class="nav-icon">📊</span>Stats
+  </button>
+</nav>
+
+<!-- Modal -->
 <div class="overlay" id="overlay">
   <div class="sheet">
     <div class="handle"></div>
@@ -156,6 +251,13 @@
           <button type="button" class="type-btn" data-type="sein_droit"><span>🤱</span>Sein droit</button>
           <button type="button" class="type-btn" data-type="les_deux"><span>🤱</span>Les deux</button>
           <button type="button" class="type-btn" data-type="biberon"><span>🍼</span>Biberon</button>
+        </div>
+      </div>
+      <div class="fg cond" id="g-bib-type">
+        <div class="lbl">Type de biberon</div>
+        <div class="bib-type-row" id="bib-type-grid">
+          <button type="button" class="bib-btn" data-bib="maternel"><span>🍼</span>Lait maternel</button>
+          <button type="button" class="bib-btn" data-bib="poudre"><span>🥛</span>Lait en poudre</button>
         </div>
       </div>
       <div class="fg">
@@ -191,9 +293,12 @@
     biberon:     { label: 'Biberon',        emoji: '🍼', cls: 'icon-biberon'     },
   };
 
-  let entries = [];
-  let selType = 'sein_gauche';
-  let editId  = null;
+  let entries    = [];
+  let selType    = 'sein_gauche';
+  let selBibType = 'maternel';
+  let editId     = null;
+  let statPeriod = 7;
+  let statMode   = 'count';
 
   /* ── Firebase ── */
   firebase.initializeApp({
@@ -211,7 +316,7 @@
 
   db.ref('.info/connected').on('value', snap => {
     const ok = !!snap.val();
-    document.getElementById('dot').className = 'sync-dot' + (ok ? '' : ' off');
+    document.getElementById('dot').className      = 'sync-dot' + (ok ? '' : ' off');
     document.getElementById('sync-lbl').textContent = ok ? 'Synchronisé' : 'Hors ligne';
   });
 
@@ -220,16 +325,26 @@
     entries = Object.entries(data).map(([id, v]) => ({ id, ...v }));
     entries.sort((a, b) => new Date(b.datetime) - new Date(a.datetime));
     render();
+    renderStats();
   });
 
   /* ── Helpers ── */
   function pad(n) { return String(n).padStart(2, '0'); }
+
   function toInput(iso) {
     const d = new Date(iso);
     return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
   }
-  function fmtTime(iso) { return new Date(iso).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' }); }
-  function dateKey(iso) { const d = new Date(iso); return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`; }
+
+  function fmtTime(iso) {
+    return new Date(iso).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+  }
+
+  function dateKey(iso) {
+    const d = new Date(iso);
+    return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+  }
+
   function fmtDay(iso) {
     const d = new Date(iso), t = new Date(), y = new Date(t);
     y.setDate(y.getDate() - 1);
@@ -237,6 +352,7 @@
     if (d.toDateString() === y.toDateString()) return 'Hier';
     return d.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
   }
+
   function timeSince(iso) {
     const m = Math.floor((Date.now() - new Date(iso)) / 60000);
     if (m < 1)  return "à l'instant";
@@ -245,13 +361,27 @@
     return r === 0 ? `il y a ${h}h` : `il y a ${h}h${r}`;
   }
 
-  /* ── Render ── */
-  function render() {
-    const list   = document.getElementById('list');
+  function getEntryDisplay(e) {
+    if (e.type === 'biberon') {
+      return e.biberon_type === 'poudre'
+        ? { label: 'Biberon poudre',   emoji: '🥛', cls: 'icon-biberon_poudre' }
+        : { label: 'Biberon maternel', emoji: '🍼', cls: 'icon-biberon' };
+    }
+    return TYPES[e.type] || TYPES.sein_gauche;
+  }
+
+  function updateHeader() {
     const todayK = dateKey(new Date().toISOString());
     document.getElementById('cnt').textContent = entries.filter(e => dateKey(e.datetime) === todayK).length;
     document.getElementById('ago').textContent = entries.length ? timeSince(entries[0].datetime) : '—';
+    const lastPoudre = entries.find(e => e.type === 'biberon' && e.biberon_type === 'poudre');
+    document.getElementById('ago-poudre').textContent = lastPoudre ? timeSince(lastPoudre.datetime) : '—';
+  }
 
+  /* ── Render journal ── */
+  function render() {
+    updateHeader();
+    const list = document.getElementById('list');
     list.querySelectorAll('.day-group').forEach(el => el.remove());
     document.getElementById('empty').style.display = entries.length ? 'none' : 'block';
     if (!entries.length) return;
@@ -265,12 +395,12 @@
       wrap.className = 'day-group';
 
       const lbl = document.createElement('div');
-      lbl.className = 'day-label';
+      lbl.className   = 'day-label';
       lbl.textContent = `${fmtDay(day[0].datetime)} — ${day.length} tétée${day.length > 1 ? 's' : ''}`;
       wrap.appendChild(lbl);
 
       day.forEach(e => {
-        const cfg  = TYPES[e.type] || TYPES.sein_gauche;
+        const cfg  = getEntryDisplay(e);
         const meta = [e.duration ? `${e.duration} min` : '', e.quantity ? `${e.quantity} ml` : ''].filter(Boolean).join(' · ');
         const card = document.createElement('div');
         card.className = 'entry-card';
@@ -291,13 +421,177 @@
     });
   }
 
+  /* ── Stats ── */
+  function getDayRange(n) {
+    const days = [];
+    for (let i = n - 1; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      d.setHours(0, 0, 0, 0);
+      days.push(dateKey(d.toISOString()));
+    }
+    return days;
+  }
+
+  function computeDayStats(key) {
+    const dayE    = entries.filter(e => dateKey(e.datetime) === key);
+    const sein    = dayE.filter(e => e.type !== 'biberon');
+    const mats    = dayE.filter(e => e.type === 'biberon' && e.biberon_type !== 'poudre');
+    const poudres = dayE.filter(e => e.type === 'biberon' && e.biberon_type === 'poudre');
+    return {
+      key,
+      total:       dayE.length,
+      sein:        sein.length,
+      maternel:    mats.length,
+      poudre:      poudres.length,
+      maternel_ml: mats.reduce((s, e)    => s + (e.quantity || 0), 0),
+      poudre_ml:   poudres.reduce((s, e) => s + (e.quantity || 0), 0),
+    };
+  }
+
+  function chartLabel(key) {
+    const d = new Date(key + 'T12:00:00');
+    return statPeriod <= 7
+      ? ['Di','Lu','Ma','Me','Je','Ve','Sa'][d.getDay()]
+      : pad(d.getDate());
+  }
+
+  function buildSVGChart(dayStats) {
+    const BAR_W   = statPeriod <= 7 ? 28 : 16;
+    const GAP     = statPeriod <= 7 ? 8  : 4;
+    const CHART_H = 120, TOTAL_H = 162, LABEL_H = 26, PAD_L = 28, PAD_R = 8;
+    const n       = dayStats.length;
+    const W       = PAD_L + n * (BAR_W + GAP) - GAP + PAD_R;
+    const baseY   = TOTAL_H - LABEL_H;
+
+    let maxVal = 1;
+    if (statMode === 'count') {
+      maxVal = Math.max(...dayStats.map(d => d.sein + d.maternel + d.poudre), 1);
+    } else {
+      maxVal = Math.max(...dayStats.map(d => d.maternel_ml + d.poudre_ml), 1);
+    }
+
+    let bars = '', xlabels = '', grid = '';
+
+    const steps = Math.min(maxVal, 4);
+    for (let s = 1; s <= steps; s++) {
+      const frac = s / steps;
+      const y    = (baseY - frac * CHART_H).toFixed(1);
+      const val  = Math.round(frac * maxVal);
+      grid += `<line x1="${PAD_L - 4}" y1="${y}" x2="${W - PAD_R}" y2="${y}" stroke="#dfe6e9" stroke-width="0.7" stroke-dasharray="3,3"/>`;
+      grid += `<text x="${PAD_L - 6}" y="${(+y + 3).toFixed(1)}" text-anchor="end" font-size="8" fill="#b2bec3">${val}</text>`;
+    }
+
+    dayStats.forEach((d, i) => {
+      const x = PAD_L + i * (BAR_W + GAP);
+      let y   = baseY;
+
+      const segs = statMode === 'count'
+        ? [{ val: d.poudre,    color: '#e17055' }, { val: d.maternel,    color: '#00b894' }, { val: d.sein,     color: '#a29bfe' }]
+        : [{ val: d.poudre_ml, color: '#e17055' }, { val: d.maternel_ml, color: '#00b894' }];
+
+      segs.forEach(seg => {
+        if (seg.val > 0) {
+          const h = Math.max((seg.val / maxVal) * CHART_H, 2);
+          y -= h;
+          bars += `<rect x="${x}" y="${y.toFixed(1)}" width="${BAR_W}" height="${h.toFixed(1)}" fill="${seg.color}" rx="2"/>`;
+        }
+      });
+
+      const fs = statPeriod <= 7 ? 10 : 8;
+      xlabels += `<text x="${(x + BAR_W / 2).toFixed(1)}" y="${TOTAL_H - 7}" text-anchor="middle" font-size="${fs}" fill="#636e72">${chartLabel(d.key)}</text>`;
+    });
+
+    return `<svg width="${W}" height="${TOTAL_H}" xmlns="http://www.w3.org/2000/svg">
+      <line x1="${PAD_L - 4}" y1="${baseY - CHART_H}" x2="${PAD_L - 4}" y2="${baseY}" stroke="#dfe6e9" stroke-width="1"/>
+      ${grid}${bars}${xlabels}
+    </svg>`;
+  }
+
+  function renderStats() {
+    if (document.getElementById('view-stats').style.display === 'none') return;
+
+    const dayStats = getDayRange(statPeriod).map(computeDayStats);
+
+    document.getElementById('chart-svg').innerHTML = buildSVGChart(dayStats);
+
+    const legendItems = statMode === 'count'
+      ? [['#a29bfe','Allaitement'], ['#00b894','Biberon maternel'], ['#e17055','Biberon poudre']]
+      : [['#00b894','Biberon maternel'], ['#e17055','Biberon poudre']];
+    document.getElementById('chart-legend').innerHTML = legendItems
+      .map(([c, l]) => `<div class="legend-item"><div class="legend-dot" style="background:${c}"></div>${l}</div>`)
+      .join('');
+
+    const withData = [...dayStats].reverse().filter(d => d.total > 0);
+    document.getElementById('day-cards').innerHTML = withData.length
+      ? withData.map(d => {
+          const totalMl = d.maternel_ml + d.poudre_ml;
+          return `<div class="day-stat-card">
+            <div class="dsc-date">${fmtDay(d.key + 'T12:00:00')}</div>
+            <div class="dsc-row">
+              <div class="dsc-item">
+                <div class="dsc-item-label">Total tétées</div>
+                <div class="dsc-item-val">${d.total}</div>
+              </div>
+              ${d.sein > 0 ? `<div class="dsc-item c-sein">
+                <div class="dsc-item-label">Allaitement</div>
+                <div class="dsc-item-val">${d.sein}×</div>
+              </div>` : ''}
+              ${d.maternel > 0 ? `<div class="dsc-item c-maternel">
+                <div class="dsc-item-label">Bib. maternel</div>
+                <div class="dsc-item-val">${d.maternel}× ${d.maternel_ml ? d.maternel_ml + ' ml' : ''}</div>
+              </div>` : ''}
+              ${d.poudre > 0 ? `<div class="dsc-item c-poudre">
+                <div class="dsc-item-label">Bib. poudre</div>
+                <div class="dsc-item-val">${d.poudre}× ${d.poudre_ml ? d.poudre_ml + ' ml' : ''}</div>
+              </div>` : ''}
+              ${totalMl > 0 ? `<div class="dsc-item">
+                <div class="dsc-item-label">Volume total</div>
+                <div class="dsc-item-val">${totalMl} ml</div>
+              </div>` : ''}
+            </div>
+          </div>`;
+        }).join('')
+      : '<p style="text-align:center;color:var(--muted);padding:40px 0">Aucune donnée sur cette période</p>';
+  }
+
+  /* ── Navigation ── */
+  function showTab(tab) {
+    const isJournal = tab === 'journal';
+    document.getElementById('view-journal').style.display = isJournal ? 'block' : 'none';
+    document.getElementById('view-stats').style.display   = isJournal ? 'none'  : 'block';
+    document.getElementById('fab').style.display          = isJournal ? 'flex'  : 'none';
+    document.getElementById('nav-journal').classList.toggle('active', isJournal);
+    document.getElementById('nav-stats').classList.toggle('active', !isJournal);
+    if (!isJournal) renderStats();
+  }
+
+  document.getElementById('nav-journal').addEventListener('click', () => showTab('journal'));
+  document.getElementById('nav-stats').addEventListener('click',   () => showTab('stats'));
+
+  document.querySelectorAll('.period-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      statPeriod = +btn.dataset.period;
+      document.querySelectorAll('.period-btn').forEach(b => b.classList.toggle('active', b === btn));
+      renderStats();
+    });
+  });
+
+  document.querySelectorAll('.mode-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      statMode = btn.dataset.mode;
+      document.querySelectorAll('.mode-btn').forEach(b => b.classList.toggle('active', b === btn));
+      renderStats();
+    });
+  });
+
   /* ── Modal ── */
   function openAdd() {
     editId = null;
     document.getElementById('modal-title').textContent = 'Nouvelle tétée';
-    document.getElementById('f-dt').value  = toInput(new Date().toISOString());
-    document.getElementById('f-dur').value = '';
-    document.getElementById('f-qty').value = '';
+    document.getElementById('f-dt').value   = toInput(new Date().toISOString());
+    document.getElementById('f-dur').value  = '';
+    document.getElementById('f-qty').value  = '';
     document.getElementById('f-note').value = '';
     document.getElementById('btn-del').style.display = 'none';
     setType('sein_gauche');
@@ -313,6 +607,7 @@
     document.getElementById('f-note').value = e.comment   || '';
     document.getElementById('btn-del').style.display = 'block';
     setType(e.type || 'sein_gauche');
+    if (e.type === 'biberon') setBibType(e.biberon_type || 'maternel');
     document.getElementById('overlay').classList.add('open');
   }
 
@@ -324,8 +619,18 @@
       b.className = 'type-btn';
       if (b.dataset.type === t) b.classList.add(`sel-${t}`);
     });
-    document.getElementById('g-dur').classList.toggle('show', t !== 'biberon');
-    document.getElementById('g-qty').classList.toggle('show', t === 'biberon');
+    document.getElementById('g-dur').classList.toggle('show',     t !== 'biberon');
+    document.getElementById('g-qty').classList.toggle('show',     t === 'biberon');
+    document.getElementById('g-bib-type').classList.toggle('show', t === 'biberon');
+    if (t === 'biberon') setBibType(selBibType);
+  }
+
+  function setBibType(bt) {
+    selBibType = bt;
+    document.querySelectorAll('.bib-btn').forEach(b => {
+      b.className = 'bib-btn';
+      if (b.dataset.bib === bt) b.classList.add(`sel-${bt}`);
+    });
   }
 
   /* ── Form ── */
@@ -335,11 +640,12 @@
     if (!dtVal) return;
 
     const data = {
-      type:     selType,
-      datetime: new Date(dtVal).toISOString(),
-      duration: document.getElementById('f-dur').value  ? +document.getElementById('f-dur').value  : null,
-      quantity: document.getElementById('f-qty').value  ? +document.getElementById('f-qty').value  : null,
-      comment:  document.getElementById('f-note').value.trim() || null,
+      type:         selType,
+      datetime:     new Date(dtVal).toISOString(),
+      biberon_type: selType === 'biberon' ? selBibType : null,
+      duration:     document.getElementById('f-dur').value ? +document.getElementById('f-dur').value : null,
+      quantity:     document.getElementById('f-qty').value ? +document.getElementById('f-qty').value : null,
+      comment:      document.getElementById('f-note').value.trim() || null,
     };
 
     if (editId) {
@@ -347,7 +653,6 @@
     } else {
       dbRef.push(data);
     }
-
     closeModal();
   });
 
@@ -366,10 +671,12 @@
     const b = e.target.closest('.type-btn');
     if (b) setType(b.dataset.type);
   });
+  document.getElementById('bib-type-grid').addEventListener('click', e => {
+    const b = e.target.closest('.bib-btn');
+    if (b) setBibType(b.dataset.bib);
+  });
 
-  setInterval(() => {
-    if (entries.length) document.getElementById('ago').textContent = timeSince(entries[0].datetime);
-  }, 30000);
+  setInterval(updateHeader, 30000);
 </script>
 </body>
 </html>
