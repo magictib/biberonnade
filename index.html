@@ -254,17 +254,27 @@
     .birth-date-btn { padding: 10px 16px; background: var(--primary); color: #fff; border: none; border-radius: 10px; cursor: pointer; font-weight: 700; transition: transform .1s; font-family: inherit; }
     .birth-date-btn:active { transform: scale(.96); }
 
-    .soins-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+    .soins-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
     .soin-card {
       background: var(--card); border-radius: var(--r);
-      padding: 14px; box-shadow: var(--shadow); cursor: pointer;
+      padding: 14px 10px; box-shadow: var(--shadow);
+      text-align: center;
+    }
+    .soin-icon { font-size: 2.2rem; margin-bottom: 4px; }
+    .soin-label { font-size: .82rem; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+    .soin-last  { font-size: .68rem; color: var(--muted); margin-top: 4px; min-height: .9em; }
+
+    .soin-counter-row { display: flex; align-items: center; justify-content: center; gap: 10px; }
+    .soin-count { font-size: 1.9rem; font-weight: 900; color: var(--primary); min-width: 36px; }
+    .soin-pm {
+      width: 36px; height: 36px; border-radius: 50%; border: none; cursor: pointer;
+      font-size: 1.3rem; font-weight: 800; line-height: 1;
+      display: flex; align-items: center; justify-content: center;
       transition: transform .1s;
     }
-    .soin-card:active { transform: scale(.97); }
-    .soin-icon { font-size: 2.5rem; margin-bottom: 8px; }
-    .soin-label { font-size: .85rem; font-weight: 600; color: var(--text); margin-bottom: 6px; }
-    .soin-count { font-size: 1.8rem; font-weight: 800; color: var(--primary); }
-    .soin-last { font-size: .7rem; color: var(--muted); margin-top: 4px; }
+    .soin-pm:active { transform: scale(.88); }
+    .soin-minus { background: #ffeef5; color: #c0392b; }
+    .soin-plus  { background: #e6faf5; color: #006e59; }
 
     .soin-entries { background: var(--card); border-radius: var(--r); padding: 12px 16px; box-shadow: var(--shadow); }
     .soin-list { max-height: 250px; overflow-y: auto; }
@@ -377,26 +387,37 @@
   <div class="age-page">
     <div class="page-title">🏥 Soins du jour</div>
     <div style="margin-bottom: 16px;">
-      <div style="font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); margin-bottom: 8px; padding: 0 4px;">Aujourd'hui</div>
       <div class="soins-grid">
-        <div class="soin-card" id="soin-pipi">
+        <div class="soin-card">
           <div class="soin-icon">💧</div>
           <div class="soin-label">Pipi</div>
-          <div class="soin-count" id="count-pipi">0</div>
+          <div class="soin-counter-row">
+            <button class="soin-pm soin-minus" data-type="pipi">−</button>
+            <div class="soin-count" id="count-pipi">0</div>
+            <button class="soin-pm soin-plus"  data-type="pipi">+</button>
+          </div>
           <div class="soin-last" id="last-pipi"></div>
         </div>
-        <div class="soin-card" id="soin-caca">
+        <div class="soin-card">
           <div class="soin-icon">💩</div>
           <div class="soin-label">Caca</div>
-          <div class="soin-count" id="count-caca">0</div>
+          <div class="soin-counter-row">
+            <button class="soin-pm soin-minus" data-type="caca">−</button>
+            <div class="soin-count" id="count-caca">0</div>
+            <button class="soin-pm soin-plus"  data-type="caca">+</button>
+          </div>
           <div class="soin-last" id="last-caca"></div>
         </div>
-        <div class="soin-card vitamines-toggle" id="soin-vitamines">
-          <div class="soin-icon">🧪</div>
-          <div class="soin-label">Vitamines<br>en gouttes</div>
-          <div class="vitamines-check" id="vitamines-check">○</div>
+      </div>
+
+      <div class="soin-card vitamines-toggle" id="soin-vitamines"
+           style="display:flex; align-items:center; gap:14px; cursor:pointer; margin-top:0;">
+        <div style="font-size:2.2rem;">🧪</div>
+        <div style="flex:1; text-align:left;">
+          <div class="soin-label" style="margin-bottom:2px;">Vitamines en gouttes</div>
           <div class="soin-last" id="last-vitamines"></div>
         </div>
+        <div class="vitamines-check" id="vitamines-check" style="font-size:2rem; margin:0;">○</div>
       </div>
     </div>
 
@@ -535,10 +556,10 @@
     renderStats();
   });
 
-  // Chargement des soins et de la date de naissance
+  // Chargement des soins
   db.ref('soins').on('value', snap => {
     soins = Object.entries(snap.val() || {}).map(([id, v]) => ({ id, ...v }));
-    renderAge();
+    renderSoins();
   });
 
   db.ref('settings/birthDate').on('value', snap => {
@@ -788,49 +809,45 @@
 
   function renderSoins() {
     if (document.getElementById('view-soins').style.display === 'none') return;
-    
-    const now = new Date();
-    const todayK = dateKey(now.toISOString());
-    const todaySoins = soins.filter(s => dateKey(s.datetime) === todayK);
-    const pipi = todaySoins.filter(s => s.type === 'pipi');
-    const caca = todaySoins.filter(s => s.type === 'caca');
+
+    const todayK = dateKey(new Date().toISOString());
+    const todaySoins = soins
+      .filter(s => dateKey(s.datetime) === todayK)
+      .sort((a, b) => new Date(b.datetime) - new Date(a.datetime));
+
+    const pipi     = todaySoins.filter(s => s.type === 'pipi');
+    const caca     = todaySoins.filter(s => s.type === 'caca');
     const vitamines = todaySoins.filter(s => s.type === 'vitamines');
 
     document.getElementById('count-pipi').textContent = pipi.length;
     document.getElementById('count-caca').textContent = caca.length;
+
     const vitCard  = document.getElementById('soin-vitamines');
     const vitCheck = document.getElementById('vitamines-check');
     vitCard.classList.toggle('vit-done', vitamines.length > 0);
     vitCheck.textContent = vitamines.length > 0 ? '✓' : '○';
 
-    const lastPipi     = pipi.length      ? pipi[0]      : null;
-    const lastCaca     = caca.length      ? caca[0]      : null;
-    const lastVitamines = vitamines.length ? vitamines[0] : null;
-
-    document.getElementById('last-pipi').textContent      = lastPipi      ? timeSince(lastPipi.datetime)      : '—';
-    document.getElementById('last-caca').textContent      = lastCaca      ? timeSince(lastCaca.datetime)      : '—';
-    document.getElementById('last-vitamines').textContent = lastVitamines ? timeSince(lastVitamines.datetime) : '';
+    document.getElementById('last-pipi').textContent      = pipi[0]      ? timeSince(pipi[0].datetime)      : '—';
+    document.getElementById('last-caca').textContent      = caca[0]      ? timeSince(caca[0].datetime)      : '—';
+    document.getElementById('last-vitamines').textContent = vitamines[0] ? timeSince(vitamines[0].datetime) : 'Pas encore aujourd\'hui';
 
     const html = todaySoins.map(s => {
-      const icon = s.type === 'pipi' ? '💧' : s.type === 'caca' ? '💩' : '🧪';
-      const label = s.type === 'pipi' ? 'Pipi' : s.type === 'caca' ? 'Caca' : 'Vitamines';
-      return `
-      <div class="soin-entry">
+      const icon  = s.type === 'pipi' ? '💧' : s.type === 'caca' ? '💩' : '🧪';
+      const label = s.type === 'pipi' ? 'Pipi' : s.type === 'caca' ? 'Caca' : 'Vitamines gouttes';
+      return `<div class="soin-entry">
         <span>${icon} ${label}</span>
         <span class="soin-entry-time">${fmtTime(s.datetime)}</span>
         <span class="soin-entry-del" data-soin-id="${s.id}">✕</span>
-      </div>
-    `;
+      </div>`;
     }).join('');
 
-    document.getElementById('soin-list').innerHTML = html || '<p style="text-align:center;color:var(--muted);padding:20px 0">Aucun enregistrement</p>';
+    const list = document.getElementById('soin-list');
+    list.innerHTML = html || '<p style="text-align:center;color:var(--muted);padding:20px 0">Aucun enregistrement aujourd\'hui</p>';
 
-    document.querySelectorAll('.soin-entry-del').forEach(btn => {
+    list.querySelectorAll('.soin-entry-del').forEach(btn => {
       btn.addEventListener('click', e => {
-        const id = e.target.dataset.soinId;
-        if (confirm('Supprimer cet enregistrement ?')) {
-          db.ref(`soins/${id}`).remove();
-        }
+        e.stopPropagation();
+        db.ref(`soins/${e.currentTarget.dataset.soinId}`).remove();
       });
     });
   }
@@ -907,21 +924,24 @@
   document.getElementById('nav-age').addEventListener('click',     () => showTab('age'));
   document.getElementById('nav-soins').addEventListener('click',   () => showTab('soins'));
 
-  // Événements pour pipi/caca/vitamines
-  document.getElementById('soin-pipi').addEventListener('click', () => {
-    db.ref('soins').push({
-      type: 'pipi',
-      datetime: new Date().toISOString()
+  // Boutons + et − pour pipi / caca
+  document.querySelectorAll('.soin-plus').forEach(btn => {
+    btn.addEventListener('click', () => {
+      db.ref('soins').push({ type: btn.dataset.type, datetime: new Date().toISOString() });
     });
   });
 
-  document.getElementById('soin-caca').addEventListener('click', () => {
-    db.ref('soins').push({
-      type: 'caca',
-      datetime: new Date().toISOString()
+  document.querySelectorAll('.soin-minus').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const todayK = dateKey(new Date().toISOString());
+      const entries = soins
+        .filter(s => s.type === btn.dataset.type && dateKey(s.datetime) === todayK)
+        .sort((a, b) => new Date(b.datetime) - new Date(a.datetime));
+      if (entries.length > 0) db.ref(`soins/${entries[0].id}`).remove();
     });
   });
 
+  // Toggle vitamines en gouttes (reset naturel chaque jour via filtre de date)
   document.getElementById('soin-vitamines').addEventListener('click', () => {
     const todayK = dateKey(new Date().toISOString());
     const todayVitamines = soins.filter(s => s.type === 'vitamines' && dateKey(s.datetime) === todayK);
