@@ -291,6 +291,17 @@
     .vitamines-toggle.vit-done .vitamines-check { color: var(--teal); }
     .page-title { font-size: 1rem; font-weight: 800; color: var(--text); margin-bottom: 16px; padding: 4px 0; }
 
+    .bain-card { display: flex; align-items: center; gap: 14px; cursor: pointer; margin-top: 10px; border: 2px solid transparent; transition: border-color .2s, background .2s; }
+    .bain-card.bain-done { background: #e8f4fe; border-color: #74b9ff; }
+    .bain-days { font-size: 1.5rem; font-weight: 900; color: #4a9df8; line-height: 1; }
+    .bain-days-label { font-size: .68rem; color: var(--muted); text-transform: uppercase; letter-spacing: .3px; margin-top: 1px; }
+    .bain-badge {
+      background: #e8f4fe; color: #1a5fa8; border-radius: 20px;
+      padding: 6px 14px; font-size: .82rem; font-weight: 700; white-space: nowrap;
+      transition: background .2s, color .2s;
+    }
+    .bain-card.bain-done .bain-badge { background: #c8edfd; color: #0e4a80; }
+
     /* Chronomètre */
     .chrono-container { display: none; background: var(--bg); border-radius: 16px; padding: 16px; margin-bottom: 16px; border: 2px solid var(--primary); }
     .chrono-container.show { display: block; }
@@ -418,6 +429,18 @@
           <div class="soin-last" id="last-vitamines"></div>
         </div>
         <div class="vitamines-check" id="vitamines-check" style="font-size:2rem; margin:0;">○</div>
+      </div>
+
+      <div class="soin-card bain-card" id="soin-bain">
+        <div style="font-size:2.2rem;">🛁</div>
+        <div style="flex:1; text-align:left;">
+          <div class="soin-label" style="margin-bottom:2px;">Bain</div>
+          <div style="display:flex; align-items:baseline; gap:5px; margin-top:2px;">
+            <span class="bain-days" id="bain-days">—</span>
+            <span class="bain-days-label" id="bain-days-label"></span>
+          </div>
+        </div>
+        <div class="bain-badge" id="bain-badge">Déclarer</div>
       </div>
     </div>
 
@@ -831,7 +854,30 @@
     document.getElementById('last-caca').textContent      = caca[0]      ? timeSince(caca[0].datetime)      : '—';
     document.getElementById('last-vitamines').textContent = vitamines[0] ? timeSince(vitamines[0].datetime) : 'Pas encore aujourd\'hui';
 
-    const html = todaySoins.map(s => {
+    // Bain — cherche dans tout l'historique
+    const allBains = soins
+      .filter(s => s.type === 'bain')
+      .sort((a, b) => new Date(b.datetime) - new Date(a.datetime));
+    const lastBain    = allBains[0] || null;
+    const bathedToday = allBains.some(s => dateKey(s.datetime) === todayK);
+
+    const bainCard = document.getElementById('soin-bain');
+    bainCard.classList.toggle('bain-done', bathedToday);
+    document.getElementById('bain-badge').textContent = bathedToday ? '✓ Fait' : 'Déclarer';
+
+    if (lastBain) {
+      const daysSince = Math.floor((Date.now() - new Date(lastBain.datetime)) / 86400000);
+      document.getElementById('bain-days').textContent       = daysSince === 0 ? '✓' : daysSince;
+      document.getElementById('bain-days-label').textContent = daysSince === 0
+        ? 'Aujourd\'hui à ' + fmtTime(lastBain.datetime)
+        : daysSince === 1 ? 'jour (hier)' : 'jours';
+    } else {
+      document.getElementById('bain-days').textContent       = '?';
+      document.getElementById('bain-days-label').textContent = 'Jamais enregistré';
+    }
+
+    // Historique du jour (hors bain, affiché dans sa propre carte)
+    const html = todaySoins.filter(s => s.type !== 'bain').map(s => {
       const icon  = s.type === 'pipi' ? '💧' : s.type === 'caca' ? '💩' : '🧪';
       const label = s.type === 'pipi' ? 'Pipi' : s.type === 'caca' ? 'Caca' : 'Vitamines gouttes';
       return `<div class="soin-entry">
@@ -939,6 +985,17 @@
         .sort((a, b) => new Date(b.datetime) - new Date(a.datetime));
       if (entries.length > 0) db.ref(`soins/${entries[0].id}`).remove();
     });
+  });
+
+  // Déclarer un bain (toggle du jour)
+  document.getElementById('soin-bain').addEventListener('click', () => {
+    const todayK = dateKey(new Date().toISOString());
+    const todayBains = soins.filter(s => s.type === 'bain' && dateKey(s.datetime) === todayK);
+    if (todayBains.length > 0) {
+      todayBains.forEach(s => db.ref(`soins/${s.id}`).remove());
+    } else {
+      db.ref('soins').push({ type: 'bain', datetime: new Date().toISOString() });
+    }
   });
 
   // Toggle vitamines en gouttes (reset naturel chaque jour via filtre de date)
