@@ -146,6 +146,24 @@
     .sync-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: #00b894; margin-right: 4px; vertical-align: middle; }
     .sync-dot.off { background: #fdcb6e; }
 
+    .child-selector { display: flex; align-items: center; gap: 6px; margin-top: 10px; flex-wrap: wrap; justify-content: center; }
+    .child-pill {
+      background: rgba(255,255,255,.18); border: 1.5px solid rgba(255,255,255,.35);
+      border-radius: 20px; padding: 5px 14px; font-size: .82rem; font-weight: 700;
+      color: rgba(255,255,255,.85); cursor: pointer; font-family: inherit; transition: all .15s;
+    }
+    .child-pill.active { background: rgba(255,255,255,.95); color: var(--primary); border-color: transparent; }
+    .child-add-btn {
+      width: 30px; height: 30px; border-radius: 50%; flex-shrink: 0;
+      background: rgba(255,255,255,.18); border: 2px dashed rgba(255,255,255,.55);
+      color: #fff; font-size: 1.25rem; font-weight: 800; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; transition: background .15s;
+    }
+    .child-add-btn:active { background: rgba(255,255,255,.35); }
+
+    .fc-gender-btn.active-garcon { border-color: #4a9df8; background: #e8f4fe; color: #1a5fa8; }
+    .fc-gender-btn.active-fille  { border-color: #e84393; background: #fde8f4; color: #a8164a; }
+
     .empty { text-align: center; padding: 70px 20px; color: var(--muted); }
     .empty .ei { font-size: 4rem; margin-bottom: 16px; }
     .empty p { font-size: 1rem; line-height: 1.6; }
@@ -332,6 +350,10 @@
     <div class="chip">Dernière&nbsp;: <strong id="ago">—</strong></div>
     <div class="chip">Dernier poudre&nbsp;: <strong id="ago-poudre">—</strong></div>
     <div class="chip"><span class="sync-dot off" id="dot"></span><span id="sync-lbl">Connexion…</span></div>
+  </div>
+  <div class="child-selector">
+    <div class="child-pills" id="child-pills"></div>
+    <button class="child-add-btn" id="btn-add-child" title="Ajouter un enfant">+</button>
   </div>
 </header>
 
@@ -529,6 +551,33 @@
   </div>
 </div>
 
+<!-- Modal ajout enfant -->
+<div class="overlay" id="overlay-child">
+  <div class="sheet">
+    <div class="handle"></div>
+    <h2>Ajouter un enfant</h2>
+    <div class="fg">
+      <label class="lbl" for="fc-name">Prénom</label>
+      <input type="text" id="fc-name" placeholder="ex : Léonie" autocomplete="off">
+    </div>
+    <div class="fg">
+      <div class="lbl">Sexe</div>
+      <div class="type-grid">
+        <button type="button" class="type-btn fc-gender-btn active-garcon" data-gender="garcon"><span>💙</span>Garçon</button>
+        <button type="button" class="type-btn fc-gender-btn" data-gender="fille"><span>💗</span>Fille</button>
+      </div>
+    </div>
+    <div class="fg">
+      <label class="lbl" for="fc-birth">Date de naissance</label>
+      <input type="date" id="fc-birth">
+    </div>
+    <div class="btn-row">
+      <button type="button" class="btn btn-cancel" id="fc-cancel">Annuler</button>
+      <button type="button" class="btn btn-primary" id="fc-save">Ajouter</button>
+    </div>
+  </div>
+</div>
+
 <script>
   const TYPES = {
     sein_gauche: { label: 'Sein gauche',    emoji: '🤱', cls: 'icon-sein_gauche' },
@@ -543,13 +592,18 @@
   let editId     = null;
   let statPeriod = 7;
   let statMode   = 'count';
-  let birthDate  = new Date('2026-03-07');
+  let birthDate  = new Date();
   let babyGender = 'garcon';
   let soins      = [];
   let chronoRunning = false;
   let chronoTime = 0;
   let chronoInterval = null;
   let chronoPaused = false;
+
+  // Multi-enfants
+  let children      = {};    // { childId: { name, gender, birthDate } }
+  let activeChildId = null;
+  let fcGender      = 'garcon';
 
   /* ── Firebase ── */
   firebase.initializeApp({
@@ -562,52 +616,112 @@
     appId: "1:602148113728:web:b0b7b04ae2be0e820a7ea5"
   });
 
-  const db    = firebase.database();
-  const dbRef = db.ref('entries');
+  const db = firebase.database();
+
+  function childEntriesRef() { return db.ref('children/' + activeChildId + '/entries'); }
+  function childSoinsRef()   { return db.ref('children/' + activeChildId + '/soins');   }
+  function childProfileRef() { return db.ref('children/' + activeChildId + '/profile'); }
 
   db.ref('.info/connected').on('value', snap => {
     const ok = !!snap.val();
-    document.getElementById('dot').className      = 'sync-dot' + (ok ? '' : ' off');
+    document.getElementById('dot').className       = 'sync-dot' + (ok ? '' : ' off');
     document.getElementById('sync-lbl').textContent = ok ? 'Synchronisé' : 'Hors ligne';
   });
 
-  dbRef.on('value', snap => {
-    const data = snap.val() || {};
-    entries = Object.entries(data).map(([id, v]) => ({ id, ...v }));
-    entries.sort((a, b) => new Date(b.datetime) - new Date(a.datetime));
-    render();
-    renderStats();
-  });
+  /* ── Sélecteur d'enfants ── */
+  function renderChildSelector() {
+    const pills = document.getElementById('child-pills');
+    pills.innerHTML = Object.entries(children).map(([id, c]) => {
+      const emoji  = c.gender === 'fille' ? '👧' : '👦';
+      const active = id === activeChildId ? ' active' : '';
+      return `<button class="child-pill${active}" data-cid="${id}">${emoji} ${c.name}</button>`;
+    }).join('');
+    pills.querySelectorAll('.child-pill').forEach(btn => {
+      btn.addEventListener('click', () => switchChild(btn.dataset.cid));
+    });
+  }
 
-  // Chargement des soins
-  db.ref('soins').on('value', snap => {
-    soins = Object.entries(snap.val() || {}).map(([id, v]) => ({ id, ...v }));
-    renderSoins();
-  });
-
-  db.ref('settings/birthDate').on('value', snap => {
-    if (snap.val()) {
-      birthDate = new Date(snap.val());
+  function attachChildListeners() {
+    childEntriesRef().on('value', snap => {
+      const data = snap.val() || {};
+      entries = Object.entries(data).map(([id, v]) => ({ id, ...v }));
+      entries.sort((a, b) => new Date(b.datetime) - new Date(a.datetime));
+      render();
+      renderStats();
+    });
+    childSoinsRef().on('value', snap => {
+      soins = Object.entries(snap.val() || {}).map(([id, v]) => ({ id, ...v }));
+      renderSoins();
+    });
+    childProfileRef().on('value', snap => {
+      const p = snap.val() || {};
+      if (p.birthDate) {
+        birthDate = new Date(p.birthDate + 'T00:00:00');
+        document.getElementById('birth-date').value = p.birthDate;
+      }
+      babyGender = p.gender || 'garcon';
       renderAge();
-    } else {
-      document.getElementById('birth-date').value = '2026-03-07';
+    });
+  }
+
+  function switchChild(id) {
+    if (activeChildId) {
+      db.ref('children/' + activeChildId + '/entries').off();
+      db.ref('children/' + activeChildId + '/soins').off();
+      db.ref('children/' + activeChildId + '/profile').off();
     }
+    activeChildId = id;
+    localStorage.setItem('activeChildId', id);
+    entries = []; soins = [];
+    render(); renderStats(); renderSoins();
+    renderChildSelector();
+    attachChildListeners();
+  }
+
+  // Mise à jour du sélecteur quand un enfant est ajouté/modifié
+  db.ref('children').on('value', snap => {
+    if (!snap.val()) return;
+    const updated = {};
+    Object.entries(snap.val()).forEach(([id, c]) => { if (c.profile) updated[id] = c.profile; });
+    children = updated;
+    renderChildSelector();
   });
 
-  db.ref('settings/birthDate').once('value', snap => {
+  // Initialisation : migration ou chargement
+  db.ref('children').once('value', snap => {
     if (snap.val()) {
-      birthDate = new Date(snap.val());
-      document.getElementById('birth-date').value = snap.val();
+      Object.entries(snap.val()).forEach(([id, c]) => { if (c.profile) children[id] = c.profile; });
+      const savedId = localStorage.getItem('activeChildId');
+      activeChildId = (savedId && children[savedId]) ? savedId : Object.keys(children)[0];
+      localStorage.setItem('activeChildId', activeChildId);
+      renderChildSelector();
+      attachChildListeners();
     } else {
-      document.getElementById('birth-date').value = '2026-03-07';
-      db.ref('settings/birthDate').set('2026-03-07');
-    }
-  });
-
-  db.ref('settings/gender').on('value', snap => {
-    if (snap.val()) {
-      babyGender = snap.val();
-      applyAgeTheme(babyGender);
+      // Premier lancement : migrer les données existantes (entries/soins/settings)
+      Promise.all([
+        db.ref('settings').once('value'),
+        db.ref('entries').once('value'),
+        db.ref('soins').once('value'),
+      ]).then(([sSnap, eSnap, soSnap]) => {
+        const s = sSnap.val() || {};
+        const profile = {
+          name:      'Bébé',
+          gender:    s.gender    || 'garcon',
+          birthDate: s.birthDate || new Date().toISOString().split('T')[0],
+        };
+        const newRef  = db.ref('children').push({ profile });
+        const childId = newRef.key;
+        const tasks   = [];
+        if (eSnap.val())  tasks.push(db.ref('children/' + childId + '/entries').set(eSnap.val()));
+        if (soSnap.val()) tasks.push(db.ref('children/' + childId + '/soins').set(soSnap.val()));
+        Promise.all(tasks).then(() => {
+          children[childId] = profile;
+          activeChildId = childId;
+          localStorage.setItem('activeChildId', childId);
+          renderChildSelector();
+          attachChildListeners();
+        });
+      });
     }
   });
 
@@ -893,7 +1007,7 @@
     list.querySelectorAll('.soin-entry-del').forEach(btn => {
       btn.addEventListener('click', e => {
         e.stopPropagation();
-        db.ref(`soins/${e.currentTarget.dataset.soinId}`).remove();
+        childSoinsRef().child(e.currentTarget.dataset.soinId).remove();
       });
     });
   }
@@ -973,17 +1087,17 @@
   // Boutons + et − pour pipi / caca
   document.querySelectorAll('.soin-plus').forEach(btn => {
     btn.addEventListener('click', () => {
-      db.ref('soins').push({ type: btn.dataset.type, datetime: new Date().toISOString() });
+      childSoinsRef().push({ type: btn.dataset.type, datetime: new Date().toISOString() });
     });
   });
 
   document.querySelectorAll('.soin-minus').forEach(btn => {
     btn.addEventListener('click', () => {
       const todayK = dateKey(new Date().toISOString());
-      const entries = soins
+      const todayEntries = soins
         .filter(s => s.type === btn.dataset.type && dateKey(s.datetime) === todayK)
         .sort((a, b) => new Date(b.datetime) - new Date(a.datetime));
-      if (entries.length > 0) db.ref(`soins/${entries[0].id}`).remove();
+      if (todayEntries.length > 0) childSoinsRef().child(todayEntries[0].id).remove();
     });
   });
 
@@ -992,28 +1106,28 @@
     const todayK = dateKey(new Date().toISOString());
     const todayBains = soins.filter(s => s.type === 'bain' && dateKey(s.datetime) === todayK);
     if (todayBains.length > 0) {
-      todayBains.forEach(s => db.ref(`soins/${s.id}`).remove());
+      todayBains.forEach(s => childSoinsRef().child(s.id).remove());
     } else {
-      db.ref('soins').push({ type: 'bain', datetime: new Date().toISOString() });
+      childSoinsRef().push({ type: 'bain', datetime: new Date().toISOString() });
     }
   });
 
-  // Toggle vitamines en gouttes (reset naturel chaque jour via filtre de date)
+  // Toggle vitamines en gouttes
   document.getElementById('soin-vitamines').addEventListener('click', () => {
     const todayK = dateKey(new Date().toISOString());
     const todayVitamines = soins.filter(s => s.type === 'vitamines' && dateKey(s.datetime) === todayK);
     if (todayVitamines.length > 0) {
-      todayVitamines.forEach(s => db.ref(`soins/${s.id}`).remove());
+      todayVitamines.forEach(s => childSoinsRef().child(s.id).remove());
     } else {
-      db.ref('soins').push({ type: 'vitamines', datetime: new Date().toISOString() });
+      childSoinsRef().push({ type: 'vitamines', datetime: new Date().toISOString() });
     }
   });
 
-  // Sélection fille / garçon
+  // Sélection fille / garçon (persiste dans le profil de l'enfant actif)
   document.querySelectorAll('.gender-btn').forEach(btn => {
     btn.addEventListener('click', () => {
       babyGender = btn.dataset.gender;
-      db.ref('settings/gender').set(babyGender);
+      childProfileRef().update({ gender: babyGender });
       applyAgeTheme(babyGender);
     });
   });
@@ -1022,10 +1136,52 @@
   document.getElementById('btn-save-birth').addEventListener('click', () => {
     const val = document.getElementById('birth-date').value;
     if (val) {
-      db.ref('settings/birthDate').set(val);
+      childProfileRef().update({ birthDate: val });
       birthDate = new Date(val + 'T00:00:00');
       renderAge();
     }
+  });
+
+  // ── Modal ajout enfant ──
+  function openChildModal() {
+    fcGender = 'garcon';
+    document.getElementById('fc-name').value  = '';
+    document.getElementById('fc-birth').value = '';
+    document.querySelectorAll('.fc-gender-btn').forEach(b => {
+      b.className = 'type-btn fc-gender-btn' + (b.dataset.gender === 'garcon' ? ' active-garcon' : '');
+    });
+    document.getElementById('overlay-child').classList.add('open');
+  }
+
+  function closeChildModal() {
+    document.getElementById('overlay-child').classList.remove('open');
+  }
+
+  document.getElementById('btn-add-child').addEventListener('click', openChildModal);
+  document.getElementById('fc-cancel').addEventListener('click', closeChildModal);
+  document.getElementById('overlay-child').addEventListener('click', e => {
+    if (e.target === document.getElementById('overlay-child')) closeChildModal();
+  });
+
+  document.querySelectorAll('.fc-gender-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      fcGender = btn.dataset.gender;
+      document.querySelectorAll('.fc-gender-btn').forEach(b => {
+        b.className = 'type-btn fc-gender-btn' +
+          (b.dataset.gender === fcGender ? (fcGender === 'fille' ? ' active-fille' : ' active-garcon') : '');
+      });
+    });
+  });
+
+  document.getElementById('fc-save').addEventListener('click', () => {
+    const name  = document.getElementById('fc-name').value.trim();
+    const birth = document.getElementById('fc-birth').value;
+    if (!name)  { document.getElementById('fc-name').focus();  return; }
+    if (!birth) { document.getElementById('fc-birth').focus(); return; }
+    const profile = { name, gender: fcGender, birthDate: birth };
+    const newRef  = db.ref('children').push({ profile });
+    closeChildModal();
+    setTimeout(() => switchChild(newRef.key), 200);
   });
 
   document.querySelectorAll('.period-btn').forEach(btn => {
@@ -1172,16 +1328,16 @@
     };
 
     if (editId) {
-      dbRef.child(editId).update(data);
+      childEntriesRef().child(editId).update(data);
     } else {
-      dbRef.push(data);
+      childEntriesRef().push(data);
     }
     closeModal();
   });
 
   document.getElementById('btn-del').addEventListener('click', () => {
     if (!confirm('Supprimer cette entrée ?')) return;
-    dbRef.child(editId).remove();
+    childEntriesRef().child(editId).remove();
     closeModal();
   });
 
