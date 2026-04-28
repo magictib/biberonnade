@@ -339,6 +339,23 @@
       width: 20px; height: 20px; cursor: pointer; accent-color: var(--primary);
     }
     .checkbox-field label { flex: 1; cursor: pointer; }
+
+    /* ── Reminders ── */
+    #reminders-bar { padding: 8px 16px 0; max-width: 600px; margin: 0 auto; }
+    .reminder-card {
+      display: flex; align-items: center; gap: 10px;
+      padding: 11px 14px; border-radius: 12px; margin-bottom: 8px;
+      font-size: .87rem; font-weight: 600;
+    }
+    .reminder-vitamines  { background: #fff9e6; border: 2px solid #e0ac00; color: #7a5800; }
+    .reminder-bain-alert { background: #fff0eb; border: 2px solid #e17055; color: #a84432; }
+    .reminder-cta {
+      margin-left: auto; flex-shrink: 0;
+      padding: 6px 12px; border: none; border-radius: 8px;
+      cursor: pointer; font-family: inherit; font-size: .8rem; font-weight: 700;
+      background: rgba(0,0,0,.1); color: inherit; transition: transform .1s;
+    }
+    .reminder-cta:active { transform: scale(.95); }
   </style>
 </head>
 <body>
@@ -356,6 +373,18 @@
     <button class="child-add-btn" id="btn-add-child" title="Ajouter un enfant">+</button>
   </div>
 </header>
+
+<!-- Rappels -->
+<div id="reminders-bar" style="display:none">
+  <div id="reminder-vitamines" class="reminder-card reminder-vitamines" style="display:none">
+    <span>🧪 <strong>Vitamines</strong> pas encore données aujourd'hui</span>
+    <button class="reminder-cta" id="reminder-vit-cta">Soins →</button>
+  </div>
+  <div id="reminder-bain" class="reminder-card reminder-bain-alert" style="display:none">
+    <span id="reminder-bain-text">🛁 <strong>Bain</strong></span>
+    <button class="reminder-cta" id="reminder-bain-cta">Soins →</button>
+  </div>
+</div>
 
 <!-- Journal -->
 <div id="view-journal">
@@ -463,6 +492,19 @@
           </div>
         </div>
         <div class="bain-badge" id="bain-badge">Déclarer</div>
+      </div>
+
+      <div class="soin-card" style="display:flex; align-items:center; gap:14px; margin-top:10px;">
+        <div style="font-size:1.6rem;">⏰</div>
+        <div style="flex:1;">
+          <div class="soin-label" style="margin-bottom:2px;">Rappel bain</div>
+          <div style="font-size:.72rem;color:var(--muted)">jours entre chaque bain (0 = désactivé)</div>
+        </div>
+        <div class="soin-counter-row">
+          <button class="soin-pm soin-minus" id="bain-days-minus">−</button>
+          <div class="soin-count" id="bain-reminder-count" style="font-size:1.5rem;">2</div>
+          <button class="soin-pm soin-plus" id="bain-days-plus">+</button>
+        </div>
       </div>
     </div>
 
@@ -600,6 +642,7 @@
   let chronoTime = 0;
   let chronoInterval = null;
   let chronoPaused = false;
+  let bainReminderDays = 2;
 
   // Multi-enfants
   let children      = {};    // { childId: { name, gender, birthDate } }
@@ -659,6 +702,7 @@
     childSoinsRef().on('value', snap => {
       soins = Object.entries(snap.val() || {}).map(([id, v]) => ({ id, ...v }));
       renderSoins();
+      checkReminders();
     });
     childProfileRef().on('value', snap => {
       const p = snap.val() || {};
@@ -667,7 +711,10 @@
         document.getElementById('birth-date').value = p.birthDate;
       }
       babyGender = p.gender || 'garcon';
+      bainReminderDays = (p.bainReminderDays !== undefined) ? p.bainReminderDays : 2;
+      document.getElementById('bain-reminder-count').textContent = bainReminderDays;
       renderAge();
+      checkReminders();
     });
   }
 
@@ -949,6 +996,39 @@
     document.getElementById('age-milestone').textContent = hit ? hit[1] : '';
 
     applyAgeTheme(babyGender);
+  }
+
+  function checkReminders() {
+    const now    = new Date();
+    const todayK = dateKey(now.toISOString());
+
+    // Vitamines : après 14h si non données aujourd'hui
+    const todayVit = soins.filter(s => s.type === 'vitamines' && dateKey(s.datetime) === todayK);
+    const showVit  = now.getHours() >= 14 && todayVit.length === 0;
+
+    // Bain : si seuil de jours dépassé
+    let showBain = false;
+    if (bainReminderDays > 0) {
+      const allBains = soins
+        .filter(s => s.type === 'bain')
+        .sort((a, b) => new Date(b.datetime) - new Date(a.datetime));
+      const lastBain = allBains[0] || null;
+      if (!lastBain) {
+        showBain = true;
+        document.getElementById('reminder-bain-text').innerHTML = '🛁 <strong>Bain</strong> — jamais enregistré !';
+      } else {
+        const daysSince = Math.floor((Date.now() - new Date(lastBain.datetime)) / 86400000);
+        showBain = daysSince > bainReminderDays;
+        if (showBain) {
+          document.getElementById('reminder-bain-text').innerHTML =
+            `🛁 <strong>Bain</strong> — il y a <strong>${daysSince}</strong> jour${daysSince > 1 ? 's' : ''}`;
+        }
+      }
+    }
+
+    document.getElementById('reminder-vitamines').style.display = showVit  ? 'flex' : 'none';
+    document.getElementById('reminder-bain').style.display      = showBain ? 'flex' : 'none';
+    document.getElementById('reminders-bar').style.display      = (showVit || showBain) ? 'block' : 'none';
   }
 
   function renderSoins() {
@@ -1435,7 +1515,29 @@
     document.getElementById('f-chrono-check').checked = false;
   });
 
-  setInterval(updateHeader, 30000);
+  document.getElementById('bain-days-minus').addEventListener('click', () => {
+    if (bainReminderDays > 0) {
+      bainReminderDays--;
+      document.getElementById('bain-reminder-count').textContent = bainReminderDays;
+      childProfileRef().update({ bainReminderDays });
+      checkReminders();
+    }
+  });
+  document.getElementById('bain-days-plus').addEventListener('click', () => {
+    if (bainReminderDays < 14) {
+      bainReminderDays++;
+      document.getElementById('bain-reminder-count').textContent = bainReminderDays;
+      childProfileRef().update({ bainReminderDays });
+      checkReminders();
+    }
+  });
+
+  document.getElementById('reminder-vit-cta').addEventListener('click',  () => showTab('soins'));
+  document.getElementById('reminder-bain-cta').addEventListener('click', () => showTab('soins'));
+
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) checkReminders(); });
+
+  setInterval(() => { updateHeader(); checkReminders(); }, 30000);
 </script>
 </body>
 </html>
