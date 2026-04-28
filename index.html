@@ -555,7 +555,7 @@
 <div class="overlay" id="overlay-child">
   <div class="sheet">
     <div class="handle"></div>
-    <h2>Ajouter un enfant</h2>
+    <h2 id="fc-title">Ajouter un enfant</h2>
     <div class="fg">
       <label class="lbl" for="fc-name">Prénom</label>
       <input type="text" id="fc-name" placeholder="ex : Léonie" autocomplete="off">
@@ -575,6 +575,7 @@
       <button type="button" class="btn btn-cancel" id="fc-cancel">Annuler</button>
       <button type="button" class="btn btn-primary" id="fc-save">Ajouter</button>
     </div>
+    <button type="button" class="btn btn-delete" id="fc-delete" style="display:none;width:100%;margin-top:10px;">Supprimer ce bébé</button>
   </div>
 </div>
 
@@ -637,7 +638,13 @@
       return `<button class="child-pill${active}" data-cid="${id}">${emoji} ${c.name}</button>`;
     }).join('');
     pills.querySelectorAll('.child-pill').forEach(btn => {
-      btn.addEventListener('click', () => switchChild(btn.dataset.cid));
+      btn.addEventListener('click', () => {
+        if (btn.dataset.cid === activeChildId) {
+          openChildModal(btn.dataset.cid); // tap sur l'enfant actif → éditer
+        } else {
+          switchChild(btn.dataset.cid);
+        }
+      });
     });
   }
 
@@ -977,7 +984,8 @@
 
     const bainCard = document.getElementById('soin-bain');
     bainCard.classList.toggle('bain-done', bathedToday);
-    document.getElementById('bain-badge').textContent = bathedToday ? '✓ Fait' : 'Déclarer';
+    const propre = babyGender === 'fille' ? 'Toute propre' : 'Tout propre';
+    document.getElementById('bain-badge').textContent = bathedToday ? '✓ Fait' : propre;
 
     if (lastBain) {
       const daysSince = Math.floor((Date.now() - new Date(lastBain.datetime)) / 86400000);
@@ -1142,13 +1150,31 @@
     }
   });
 
-  // ── Modal ajout enfant ──
-  function openChildModal() {
-    fcGender = 'garcon';
-    document.getElementById('fc-name').value  = '';
-    document.getElementById('fc-birth').value = '';
+  // ── Modal ajout / modification d'un enfant ──
+  let editChildId = null;
+
+  function openChildModal(childId) {
+    editChildId = childId || null;
+    const isEdit = !!editChildId;
+
+    document.getElementById('fc-title').textContent  = isEdit ? 'Modifier le bébé' : 'Ajouter un enfant';
+    document.getElementById('fc-save').textContent   = isEdit ? 'Enregistrer'       : 'Ajouter';
+    document.getElementById('fc-delete').style.display = isEdit ? 'block' : 'none';
+
+    if (isEdit) {
+      const c = children[editChildId] || {};
+      fcGender = c.gender || 'garcon';
+      document.getElementById('fc-name').value  = c.name      || '';
+      document.getElementById('fc-birth').value = c.birthDate || '';
+    } else {
+      fcGender = 'garcon';
+      document.getElementById('fc-name').value  = '';
+      document.getElementById('fc-birth').value = '';
+    }
+
     document.querySelectorAll('.fc-gender-btn').forEach(b => {
-      b.className = 'type-btn fc-gender-btn' + (b.dataset.gender === 'garcon' ? ' active-garcon' : '');
+      b.className = 'type-btn fc-gender-btn' +
+        (b.dataset.gender === fcGender ? (fcGender === 'fille' ? ' active-fille' : ' active-garcon') : '');
     });
     document.getElementById('overlay-child').classList.add('open');
   }
@@ -1157,7 +1183,7 @@
     document.getElementById('overlay-child').classList.remove('open');
   }
 
-  document.getElementById('btn-add-child').addEventListener('click', openChildModal);
+  document.getElementById('btn-add-child').addEventListener('click', () => openChildModal(null));
   document.getElementById('fc-cancel').addEventListener('click', closeChildModal);
   document.getElementById('overlay-child').addEventListener('click', e => {
     if (e.target === document.getElementById('overlay-child')) closeChildModal();
@@ -1179,9 +1205,44 @@
     if (!name)  { document.getElementById('fc-name').focus();  return; }
     if (!birth) { document.getElementById('fc-birth').focus(); return; }
     const profile = { name, gender: fcGender, birthDate: birth };
-    const newRef  = db.ref('children').push({ profile });
+
+    if (editChildId) {
+      db.ref('children/' + editChildId + '/profile').update(profile);
+      children[editChildId] = profile;
+      // Si c'est l'enfant actif, rafraîchir age/soins
+      if (editChildId === activeChildId) {
+        babyGender = fcGender;
+        birthDate  = new Date(birth + 'T00:00:00');
+        renderAge();
+        renderSoins();
+      }
+      renderChildSelector();
+      closeChildModal();
+    } else {
+      const newRef = db.ref('children').push({ profile });
+      closeChildModal();
+      setTimeout(() => switchChild(newRef.key), 200);
+    }
+  });
+
+  document.getElementById('fc-delete').addEventListener('click', () => {
+    if (Object.keys(children).length <= 1) {
+      alert('Impossible de supprimer le seul bébé enregistré.');
+      return;
+    }
+    const name = (children[editChildId] || {}).name || 'ce bébé';
+    if (!confirm('Supprimer ' + name + ' et toutes ses données ?')) return;
+
+    const idToDelete = editChildId;
     closeChildModal();
-    setTimeout(() => switchChild(newRef.key), 200);
+
+    // Basculer vers un autre enfant avant de supprimer
+    const otherId = Object.keys(children).find(id => id !== idToDelete);
+    switchChild(otherId);
+
+    db.ref('children/' + idToDelete).remove();
+    delete children[idToDelete];
+    renderChildSelector();
   });
 
   document.querySelectorAll('.period-btn').forEach(btn => {
