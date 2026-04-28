@@ -451,7 +451,15 @@
     <div style="margin-bottom: 16px;">
       <div class="soins-grid">
         <div class="soin-card">
-          <div class="soin-icon">💧</div>
+          <div class="soin-icon" style="line-height:1">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="36" height="36">
+              <path d="M16 2C13 8 4 15 4 22a12 12 0 0024 0C28 15 19 8 16 2z" fill="#FFD700" stroke="#DCA800" stroke-width="1.5"/>
+              <circle cx="12" cy="23" r="2.5" fill="#3d2800"/>
+              <circle cx="20" cy="23" r="2.5" fill="#3d2800"/>
+              <circle cx="13" cy="22" r="1" fill="#fff"/>
+              <circle cx="21" cy="22" r="1" fill="#fff"/>
+            </svg>
+          </div>
           <div class="soin-label">Pipi</div>
           <div class="soin-counter-row">
             <button class="soin-pm soin-minus" data-type="pipi">−</button>
@@ -1080,7 +1088,8 @@
 
     // Historique du jour (hors bain, affiché dans sa propre carte)
     const html = todaySoins.filter(s => s.type !== 'bain').map(s => {
-      const icon  = s.type === 'pipi' ? '💧' : s.type === 'caca' ? '💩' : '🧪';
+      const pipiSvg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width="18" height="18" style="vertical-align:middle"><path d="M16 2C13 8 4 15 4 22a12 12 0 0024 0C28 15 19 8 16 2z" fill="#FFD700" stroke="#DCA800" stroke-width="1.5"/><circle cx="12" cy="23" r="2.5" fill="#3d2800"/><circle cx="20" cy="23" r="2.5" fill="#3d2800"/><circle cx="13" cy="22" r="1" fill="#fff"/><circle cx="21" cy="22" r="1" fill="#fff"/></svg>';
+      const icon  = s.type === 'pipi' ? pipiSvg : s.type === 'caca' ? '💩' : '🧪';
       const label = s.type === 'pipi' ? 'Pipi' : s.type === 'caca' ? 'Caca' : 'Vitamines gouttes';
       return `<div class="soin-entry">
         <span>${icon} ${label}</span>
