@@ -184,6 +184,67 @@
     .dsc-item.c-sein     .dsc-item-val { color: #a29bfe; }
     .dsc-item.c-maternel .dsc-item-val { color: var(--teal); }
     .dsc-item.c-poudre   .dsc-item-val { color: var(--orange); }
+
+    /* ── Age et soins ── */
+    .age-page { padding: 16px; max-width: 600px; margin: 0 auto; }
+    .age-card {
+      background: var(--card); border-radius: var(--r);
+      padding: 20px 16px; margin-bottom: 16px; box-shadow: var(--shadow);
+      text-align: center;
+    }
+    .age-number { font-size: 3.5rem; font-weight: 800; color: var(--primary); }
+    .age-label { font-size: .85rem; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-top: 8px; }
+    .birth-date-row { display: flex; gap: 8px; margin-top: 12px; align-items: center; }
+    .birth-date-input { flex: 1; padding: 10px 12px; border: 2px solid var(--border); border-radius: 10px; font-size: .9rem; }
+    .birth-date-btn { padding: 10px 16px; background: var(--primary); color: #fff; border: none; border-radius: 10px; cursor: pointer; font-weight: 600; transition: transform .1s; }
+    .birth-date-btn:active { transform: scale(.96); }
+
+    .soins-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+    .soin-card {
+      background: var(--card); border-radius: var(--r);
+      padding: 14px; box-shadow: var(--shadow); cursor: pointer;
+      transition: transform .1s;
+    }
+    .soin-card:active { transform: scale(.97); }
+    .soin-icon { font-size: 2.5rem; margin-bottom: 8px; }
+    .soin-label { font-size: .85rem; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+    .soin-count { font-size: 1.8rem; font-weight: 800; color: var(--primary); }
+    .soin-last { font-size: .7rem; color: var(--muted); margin-top: 4px; }
+
+    .soin-entries { background: var(--card); border-radius: var(--r); padding: 12px 16px; box-shadow: var(--shadow); }
+    .soin-list { max-height: 250px; overflow-y: auto; }
+    .soin-entry {
+      padding: 8px 0; border-bottom: 1px solid var(--border);
+      display: flex; justify-content: space-between; align-items: center; font-size: .9rem;
+    }
+    .soin-entry:last-child { border-bottom: none; }
+    .soin-entry-time { color: var(--primary); font-weight: 700; }
+    .soin-entry-del { color: #c0392b; cursor: pointer; padding: 0 6px; font-size: 1.2rem; line-height: 1; }
+
+    .vitamines-toggle.vit-done { background: #e6faf5; border: 2px solid var(--teal); }
+    .vitamines-check { font-size: 1.8rem; line-height: 1; margin-top: 4px; color: var(--border); }
+    .vitamines-toggle.vit-done .vitamines-check { color: var(--teal); }
+    .page-title { font-size: 1rem; font-weight: 800; color: var(--text); margin-bottom: 16px; padding: 4px 0; }
+
+    /* Chronomètre */
+    .chrono-container { display: none; background: var(--bg); border-radius: 16px; padding: 16px; margin-bottom: 16px; border: 2px solid var(--primary); }
+    .chrono-container.show { display: block; }
+    .chrono-display { font-size: 2rem; font-weight: 800; color: var(--primary); text-align: center; margin-bottom: 12px; font-family: 'Courier New', monospace; }
+    .chrono-buttons { display: flex; gap: 8px; }
+    .chrono-btn { flex: 1; padding: 12px; border: none; border-radius: 10px; font-weight: 600; cursor: pointer; transition: transform .1s; }
+    .chrono-btn:active { transform: scale(.97); }
+    .chrono-stop { background: #c0392b; color: #fff; }
+    .chrono-pause { background: #f39c12; color: #fff; }
+
+    .checkbox-field {
+      display: flex; align-items: center; gap: 10px;
+      padding: 12px 0; border-bottom: 1px solid var(--border);
+    }
+    .checkbox-field:last-child { border-bottom: none; }
+    .checkbox-field input[type="checkbox"] {
+      width: 20px; height: 20px; cursor: pointer; accent-color: var(--primary);
+    }
+    .checkbox-field label { flex: 1; cursor: pointer; }
   </style>
 </head>
 <body>
@@ -227,6 +288,56 @@
   </div>
 </div>
 
+<!-- Âge -->
+<div id="view-age" style="display:none">
+  <div class="age-page">
+    <div class="page-title">👶 Âge du bébé</div>
+    <div class="age-card">
+      <div class="age-number" id="age-days">0</div>
+      <div class="age-label">jours</div>
+      <div class="birth-date-row">
+        <input type="date" id="birth-date" class="birth-date-input">
+        <button class="birth-date-btn" id="btn-save-birth">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Soins -->
+<div id="view-soins" style="display:none">
+  <div class="age-page">
+    <div class="page-title">🏥 Soins du jour</div>
+    <div style="margin-bottom: 16px;">
+      <div style="font-size: .75rem; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); margin-bottom: 8px; padding: 0 4px;">Aujourd'hui</div>
+      <div class="soins-grid">
+        <div class="soin-card" id="soin-pipi">
+          <div class="soin-icon">💧</div>
+          <div class="soin-label">Pipi</div>
+          <div class="soin-count" id="count-pipi">0</div>
+          <div class="soin-last" id="last-pipi"></div>
+        </div>
+        <div class="soin-card" id="soin-caca">
+          <div class="soin-icon">💩</div>
+          <div class="soin-label">Caca</div>
+          <div class="soin-count" id="count-caca">0</div>
+          <div class="soin-last" id="last-caca"></div>
+        </div>
+        <div class="soin-card vitamines-toggle" id="soin-vitamines">
+          <div class="soin-icon">🧪</div>
+          <div class="soin-label">Vitamines<br>en gouttes</div>
+          <div class="vitamines-check" id="vitamines-check">○</div>
+          <div class="soin-last" id="last-vitamines"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="soin-entries">
+      <div style="font-size: .85rem; font-weight: 700; margin-bottom: 8px;">Historique du jour</div>
+      <div class="soin-list" id="soin-list"></div>
+    </div>
+  </div>
+</div>
+
 <button class="fab" id="fab">+</button>
 
 <nav class="bottom-nav">
@@ -235,6 +346,12 @@
   </button>
   <button class="nav-btn" id="nav-stats">
     <span class="nav-icon">📊</span>Stats
+  </button>
+  <button class="nav-btn" id="nav-age">
+    <span class="nav-icon">👶</span>Âge
+  </button>
+  <button class="nav-btn" id="nav-soins">
+    <span class="nav-icon">🏥</span>Soins
   </button>
 </nav>
 
@@ -272,6 +389,20 @@
         <label class="lbl" for="f-qty">Quantité (ml)</label>
         <input type="number" id="f-qty" min="1" max="500" placeholder="ex : 120">
       </div>
+      <div class="fg cond" id="g-chrono">
+        <div class="lbl">Chronomètre</div>
+        <div class="checkbox-field">
+          <input type="checkbox" id="f-chrono-check">
+          <label for="f-chrono-check">Démarrer un chronomètre</label>
+        </div>
+        <div class="chrono-container" id="chrono-container">
+          <div class="chrono-display" id="chrono-display">00:00:00</div>
+          <div class="chrono-buttons">
+            <button type="button" class="chrono-btn chrono-pause" id="btn-chrono-pause">Pause</button>
+            <button type="button" class="chrono-btn chrono-stop" id="btn-chrono-stop">Fin tétée</button>
+          </div>
+        </div>
+      </div>
       <div class="fg">
         <label class="lbl" for="f-note">Commentaire (optionnel)</label>
         <textarea id="f-note" rows="2" placeholder="Notes, observations…"></textarea>
@@ -299,6 +430,12 @@
   let editId     = null;
   let statPeriod = 7;
   let statMode   = 'count';
+  let birthDate  = new Date('2026-03-07');
+  let soins      = [];
+  let chronoRunning = false;
+  let chronoTime = 0;
+  let chronoInterval = null;
+  let chronoPaused = false;
 
   /* ── Firebase ── */
   firebase.initializeApp({
@@ -326,6 +463,31 @@
     entries.sort((a, b) => new Date(b.datetime) - new Date(a.datetime));
     render();
     renderStats();
+  });
+
+  // Chargement des soins et de la date de naissance
+  db.ref('soins').on('value', snap => {
+    soins = Object.entries(snap.val() || {}).map(([id, v]) => ({ id, ...v }));
+    renderAge();
+  });
+
+  db.ref('settings/birthDate').on('value', snap => {
+    if (snap.val()) {
+      birthDate = new Date(snap.val());
+      renderAge();
+    } else {
+      document.getElementById('birth-date').value = '2026-03-07';
+    }
+  });
+
+  db.ref('settings/birthDate').once('value', snap => {
+    if (snap.val()) {
+      birthDate = new Date(snap.val());
+      document.getElementById('birth-date').value = snap.val();
+    } else {
+      document.getElementById('birth-date').value = '2026-03-07';
+      db.ref('settings/birthDate').set('2026-03-07');
+    }
   });
 
   /* ── Helpers ── */
@@ -508,6 +670,64 @@
     </svg>`;
   }
 
+  function renderAge() {
+    if (document.getElementById('view-age').style.display === 'none') return;
+    
+    const now = new Date();
+    const diff = now - birthDate;
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    document.getElementById('age-days').textContent = days;
+  }
+
+  function renderSoins() {
+    if (document.getElementById('view-soins').style.display === 'none') return;
+    
+    const now = new Date();
+    const todayK = dateKey(now.toISOString());
+    const todaySoins = soins.filter(s => dateKey(s.datetime) === todayK);
+    const pipi = todaySoins.filter(s => s.type === 'pipi');
+    const caca = todaySoins.filter(s => s.type === 'caca');
+    const vitamines = todaySoins.filter(s => s.type === 'vitamines');
+
+    document.getElementById('count-pipi').textContent = pipi.length;
+    document.getElementById('count-caca').textContent = caca.length;
+    const vitCard  = document.getElementById('soin-vitamines');
+    const vitCheck = document.getElementById('vitamines-check');
+    vitCard.classList.toggle('vit-done', vitamines.length > 0);
+    vitCheck.textContent = vitamines.length > 0 ? '✓' : '○';
+
+    const lastPipi     = pipi.length      ? pipi[0]      : null;
+    const lastCaca     = caca.length      ? caca[0]      : null;
+    const lastVitamines = vitamines.length ? vitamines[0] : null;
+
+    document.getElementById('last-pipi').textContent      = lastPipi      ? timeSince(lastPipi.datetime)      : '—';
+    document.getElementById('last-caca').textContent      = lastCaca      ? timeSince(lastCaca.datetime)      : '—';
+    document.getElementById('last-vitamines').textContent = lastVitamines ? timeSince(lastVitamines.datetime) : '';
+
+    const html = todaySoins.map(s => {
+      const icon = s.type === 'pipi' ? '💧' : s.type === 'caca' ? '💩' : '🧪';
+      const label = s.type === 'pipi' ? 'Pipi' : s.type === 'caca' ? 'Caca' : 'Vitamines';
+      return `
+      <div class="soin-entry">
+        <span>${icon} ${label}</span>
+        <span class="soin-entry-time">${fmtTime(s.datetime)}</span>
+        <span class="soin-entry-del" data-soin-id="${s.id}">✕</span>
+      </div>
+    `;
+    }).join('');
+
+    document.getElementById('soin-list').innerHTML = html || '<p style="text-align:center;color:var(--muted);padding:20px 0">Aucun enregistrement</p>';
+
+    document.querySelectorAll('.soin-entry-del').forEach(btn => {
+      btn.addEventListener('click', e => {
+        const id = e.target.dataset.soinId;
+        if (confirm('Supprimer cet enregistrement ?')) {
+          db.ref(`soins/${id}`).remove();
+        }
+      });
+    });
+  }
+
   function renderStats() {
     if (document.getElementById('view-stats').style.display === 'none') return;
 
@@ -558,16 +778,62 @@
   /* ── Navigation ── */
   function showTab(tab) {
     const isJournal = tab === 'journal';
+    const isStats = tab === 'stats';
+    const isAge = tab === 'age';
+    const isSoins = tab === 'soins';
     document.getElementById('view-journal').style.display = isJournal ? 'block' : 'none';
-    document.getElementById('view-stats').style.display   = isJournal ? 'none'  : 'block';
+    document.getElementById('view-stats').style.display   = isStats ? 'block' : 'none';
+    document.getElementById('view-age').style.display     = isAge ? 'block' : 'none';
+    document.getElementById('view-soins').style.display   = isSoins ? 'block' : 'none';
     document.getElementById('fab').style.display          = isJournal ? 'flex'  : 'none';
     document.getElementById('nav-journal').classList.toggle('active', isJournal);
-    document.getElementById('nav-stats').classList.toggle('active', !isJournal);
-    if (!isJournal) renderStats();
+    document.getElementById('nav-stats').classList.toggle('active', isStats);
+    document.getElementById('nav-age').classList.toggle('active', isAge);
+    document.getElementById('nav-soins').classList.toggle('active', isSoins);
+    if (isStats) renderStats();
+    if (isAge) renderAge();
+    if (isSoins) renderSoins();
   }
 
   document.getElementById('nav-journal').addEventListener('click', () => showTab('journal'));
   document.getElementById('nav-stats').addEventListener('click',   () => showTab('stats'));
+  document.getElementById('nav-age').addEventListener('click',     () => showTab('age'));
+  document.getElementById('nav-soins').addEventListener('click',   () => showTab('soins'));
+
+  // Événements pour pipi/caca/vitamines
+  document.getElementById('soin-pipi').addEventListener('click', () => {
+    db.ref('soins').push({
+      type: 'pipi',
+      datetime: new Date().toISOString()
+    });
+  });
+
+  document.getElementById('soin-caca').addEventListener('click', () => {
+    db.ref('soins').push({
+      type: 'caca',
+      datetime: new Date().toISOString()
+    });
+  });
+
+  document.getElementById('soin-vitamines').addEventListener('click', () => {
+    const todayK = dateKey(new Date().toISOString());
+    const todayVitamines = soins.filter(s => s.type === 'vitamines' && dateKey(s.datetime) === todayK);
+    if (todayVitamines.length > 0) {
+      todayVitamines.forEach(s => db.ref(`soins/${s.id}`).remove());
+    } else {
+      db.ref('soins').push({ type: 'vitamines', datetime: new Date().toISOString() });
+    }
+  });
+
+  // Enregistrement de la date de naissance
+  document.getElementById('btn-save-birth').addEventListener('click', () => {
+    const val = document.getElementById('birth-date').value;
+    if (val) {
+      db.ref('settings/birthDate').set(val);
+      birthDate = new Date(val + 'T00:00:00');
+      renderAge();
+    }
+  });
 
   document.querySelectorAll('.period-btn').forEach(btn => {
     btn.addEventListener('click', () => {
@@ -593,7 +859,9 @@
     document.getElementById('f-dur').value  = '';
     document.getElementById('f-qty').value  = '';
     document.getElementById('f-note').value = '';
+    document.getElementById('f-chrono-check').checked = false;
     document.getElementById('btn-del').style.display = 'none';
+    resetChrono();
     setType('sein_gauche');
     document.getElementById('overlay').classList.add('open');
   }
@@ -605,13 +873,18 @@
     document.getElementById('f-dur').value  = e.duration || '';
     document.getElementById('f-qty').value  = e.quantity  || '';
     document.getElementById('f-note').value = e.comment   || '';
+    document.getElementById('f-chrono-check').checked = false;
     document.getElementById('btn-del').style.display = 'block';
+    resetChrono();
     setType(e.type || 'sein_gauche');
     if (e.type === 'biberon') setBibType(e.biberon_type || 'maternel');
     document.getElementById('overlay').classList.add('open');
   }
 
-  function closeModal() { document.getElementById('overlay').classList.remove('open'); }
+  function closeModal() {
+    document.getElementById('overlay').classList.remove('open');
+    resetChrono();
+  }
 
   function setType(t) {
     selType = t;
@@ -622,6 +895,7 @@
     document.getElementById('g-dur').classList.toggle('show',     t !== 'biberon');
     document.getElementById('g-qty').classList.toggle('show',     t === 'biberon');
     document.getElementById('g-bib-type').classList.toggle('show', t === 'biberon');
+    document.getElementById('g-chrono').classList.toggle('show',  t !== 'biberon');
     if (t === 'biberon') setBibType(selBibType);
   }
 
@@ -632,7 +906,63 @@
       if (b.dataset.bib === bt) b.classList.add(`sel-${bt}`);
     });
   }
+  /* ── Chronomètre ── */
+  function updateChronoDisplay() {
+    const h = Math.floor(chronoTime / 3600);
+    const m = Math.floor((chronoTime % 3600) / 60);
+    const s = chronoTime % 60;
+    document.getElementById('chrono-display').textContent = `${pad(h)}:${pad(m)}:${pad(s)}`;
+  }
 
+  function startChrono() {
+    chronoRunning = true;
+    chronoPaused = false;
+    document.getElementById('chrono-container').classList.add('show');
+    document.getElementById('btn-chrono-pause').textContent = 'Pause';
+    
+    if (chronoInterval) clearInterval(chronoInterval);
+    chronoInterval = setInterval(() => {
+      chronoTime++;
+      updateChronoDisplay();
+    }, 1000);
+  }
+
+  function pauseChrono() {
+    if (!chronoRunning) return;
+    chronoPaused = !chronoPaused;
+    if (chronoPaused) {
+      clearInterval(chronoInterval);
+      document.getElementById('btn-chrono-pause').textContent = 'Reprendre';
+    } else {
+      chronoInterval = setInterval(() => {
+        chronoTime++;
+        updateChronoDisplay();
+      }, 1000);
+      document.getElementById('btn-chrono-pause').textContent = 'Pause';
+    }
+  }
+
+  function stopChrono() {
+    clearInterval(chronoInterval);
+    chronoInterval = null;
+    chronoRunning = false;
+    chronoPaused = false;
+    const elapsed = chronoTime;
+    chronoTime = 0;
+    updateChronoDisplay();
+    document.getElementById('chrono-container').classList.remove('show');
+    const minutes = Math.round(elapsed / 60);
+    document.getElementById('f-dur').value = minutes > 0 ? minutes : 1;
+  }
+
+  function resetChrono() {
+    if (chronoInterval) clearInterval(chronoInterval);
+    chronoRunning = false;
+    chronoPaused = false;
+    chronoTime = 0;
+    updateChronoDisplay();
+    document.getElementById('chrono-container').classList.remove('show');
+  }
   /* ── Form ── */
   document.getElementById('form').addEventListener('submit', e => {
     e.preventDefault();
@@ -674,6 +1004,25 @@
   document.getElementById('bib-type-grid').addEventListener('click', e => {
     const b = e.target.closest('.bib-btn');
     if (b) setBibType(b.dataset.bib);
+  });
+
+  document.getElementById('f-chrono-check').addEventListener('change', e => {
+    if (e.target.checked) {
+      startChrono();
+    } else {
+      resetChrono();
+    }
+  });
+
+  document.getElementById('btn-chrono-pause').addEventListener('click', e => {
+    e.preventDefault();
+    pauseChrono();
+  });
+
+  document.getElementById('btn-chrono-stop').addEventListener('click', e => {
+    e.preventDefault();
+    stopChrono();
+    document.getElementById('f-chrono-check').checked = false;
   });
 
   setInterval(updateHeader, 30000);
