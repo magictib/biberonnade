@@ -185,18 +185,73 @@
     .dsc-item.c-maternel .dsc-item-val { color: var(--teal); }
     .dsc-item.c-poudre   .dsc-item-val { color: var(--orange); }
 
-    /* ── Age et soins ── */
+    /* ── Age ── */
     .age-page { padding: 16px; max-width: 600px; margin: 0 auto; }
-    .age-card {
-      background: var(--card); border-radius: var(--r);
-      padding: 20px 16px; margin-bottom: 16px; box-shadow: var(--shadow);
-      text-align: center;
+
+    .gender-row { display: flex; gap: 8px; margin-bottom: 16px; }
+    .gender-btn {
+      flex: 1; padding: 12px 8px; border: 2px solid var(--border); border-radius: 14px;
+      background: #fff; cursor: pointer; font-family: inherit;
+      font-size: .95rem; font-weight: 700; color: var(--muted); transition: all .15s;
     }
-    .age-number { font-size: 3.5rem; font-weight: 800; color: var(--primary); }
-    .age-label { font-size: .85rem; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; margin-top: 8px; }
-    .birth-date-row { display: flex; gap: 8px; margin-top: 12px; align-items: center; }
-    .birth-date-input { flex: 1; padding: 10px 12px; border: 2px solid var(--border); border-radius: 10px; font-size: .9rem; }
-    .birth-date-btn { padding: 10px 16px; background: var(--primary); color: #fff; border: none; border-radius: 10px; cursor: pointer; font-weight: 600; transition: transform .1s; }
+    .gender-btn:active { transform: scale(.96); }
+    .gender-btn.active-garcon { border-color: #4a9df8; background: #e8f4fe; color: #1a5fa8; }
+    .gender-btn.active-fille  { border-color: #e84393; background: #fde8f4; color: #a8164a; }
+
+    .baby-display-card {
+      border-radius: 24px; padding: 24px 20px; margin-bottom: 16px;
+      box-shadow: var(--shadow); text-align: center;
+      background: linear-gradient(145deg, #f0effe 0%, #fff 65%);
+      transition: background .4s;
+    }
+    .baby-display-card.theme-garcon { background: linear-gradient(145deg, #daeffe 0%, #fff 65%); }
+    .baby-display-card.theme-fille  { background: linear-gradient(145deg, #fde0f0 0%, #fff 65%); }
+
+    .baby-deco { font-size: 1.2rem; letter-spacing: 6px; margin-bottom: 14px; user-select: none; }
+
+    .baby-face-circle {
+      width: 114px; height: 114px; border-radius: 50%;
+      margin: 0 auto 18px; display: flex; align-items: center; justify-content: center;
+      font-size: 4.2rem; box-shadow: 0 6px 24px rgba(0,0,0,.10);
+      border: 3px solid #ffe082; background: #fff9e0;
+      animation: baby-float 3.2s ease-in-out infinite;
+      transition: border-color .4s, background .4s;
+    }
+    .baby-face-circle.theme-garcon { background: #daeffe; border-color: #74b9ff; }
+    .baby-face-circle.theme-fille  { background: #fde0f0; border-color: #fd79a8; }
+    @keyframes baby-float {
+      0%, 100% { transform: translateY(0px); }
+      50%       { transform: translateY(-7px); }
+    }
+
+    .age-big-number {
+      font-size: 5.5rem; font-weight: 900; line-height: 1;
+      color: var(--primary); transition: color .4s;
+    }
+    .age-big-number.theme-garcon { color: #4a9df8; }
+    .age-big-number.theme-fille  { color: #e84393; }
+
+    .age-big-label { font-size: .85rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); margin: 4px 0 14px; }
+
+    .age-sub { font-size: .9rem; color: var(--muted); margin-bottom: 10px; min-height: 1.2em; }
+
+    .age-milestone {
+      display: inline-block; font-size: .88rem; font-weight: 700;
+      padding: 6px 18px; border-radius: 20px; background: #fff9e0; color: #7a5800;
+      transition: background .4s, color .4s;
+    }
+    .age-milestone.theme-garcon { background: #daeffe; color: #1a5fa8; }
+    .age-milestone.theme-fille  { background: #fde0f0; color: #a8164a; }
+    .age-milestone:empty { display: none; }
+
+    .age-settings-card {
+      background: var(--card); border-radius: var(--r);
+      padding: 16px; box-shadow: var(--shadow);
+    }
+    .age-settings-label { font-size: .76rem; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; color: var(--muted); margin-bottom: 10px; }
+    .birth-date-row { display: flex; gap: 8px; align-items: center; }
+    .birth-date-input { flex: 1; padding: 10px 12px; border: 2px solid var(--border); border-radius: 10px; font-size: .9rem; font-family: inherit; color: var(--text); }
+    .birth-date-btn { padding: 10px 16px; background: var(--primary); color: #fff; border: none; border-radius: 10px; cursor: pointer; font-weight: 700; transition: transform .1s; font-family: inherit; }
     .birth-date-btn:active { transform: scale(.96); }
 
     .soins-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 16px; }
@@ -291,15 +346,29 @@
 <!-- Âge -->
 <div id="view-age" style="display:none">
   <div class="age-page">
-    <div class="page-title">👶 Âge du bébé</div>
-    <div class="age-card">
-      <div class="age-number" id="age-days">0</div>
-      <div class="age-label">jours</div>
+
+    <div class="gender-row">
+      <button class="gender-btn active-garcon" id="gender-garcon" data-gender="garcon">💙 Garçon</button>
+      <button class="gender-btn" id="gender-fille" data-gender="fille">💗 Fille</button>
+    </div>
+
+    <div class="baby-display-card theme-garcon" id="baby-display-card">
+      <div class="baby-deco" id="baby-deco">⭐ 💙 ⭐</div>
+      <div class="baby-face-circle theme-garcon" id="baby-face-circle">👶</div>
+      <div class="age-big-number theme-garcon" id="age-days">0</div>
+      <div class="age-big-label">jours</div>
+      <div class="age-sub" id="age-sub"></div>
+      <div class="age-milestone theme-garcon" id="age-milestone"></div>
+    </div>
+
+    <div class="age-settings-card">
+      <div class="age-settings-label">📅 Date de naissance</div>
       <div class="birth-date-row">
         <input type="date" id="birth-date" class="birth-date-input">
         <button class="birth-date-btn" id="btn-save-birth">Enregistrer</button>
       </div>
     </div>
+
   </div>
 </div>
 
@@ -431,6 +500,7 @@
   let statPeriod = 7;
   let statMode   = 'count';
   let birthDate  = new Date('2026-03-07');
+  let babyGender = 'garcon';
   let soins      = [];
   let chronoRunning = false;
   let chronoTime = 0;
@@ -487,6 +557,13 @@
     } else {
       document.getElementById('birth-date').value = '2026-03-07';
       db.ref('settings/birthDate').set('2026-03-07');
+    }
+  });
+
+  db.ref('settings/gender').on('value', snap => {
+    if (snap.val()) {
+      babyGender = snap.val();
+      applyAgeTheme(babyGender);
     }
   });
 
@@ -670,13 +747,43 @@
     </svg>`;
   }
 
+  function applyAgeTheme(gender) {
+    const ids = ['baby-display-card', 'baby-face-circle', 'age-days', 'age-milestone'];
+    ids.forEach(id => {
+      const el = document.getElementById(id);
+      el.classList.remove('theme-garcon', 'theme-fille');
+      el.classList.add(gender === 'fille' ? 'theme-fille' : 'theme-garcon');
+    });
+    document.getElementById('baby-deco').textContent   = gender === 'fille' ? '🌸 💗 🌸' : '⭐ 💙 ⭐';
+    document.getElementById('gender-garcon').className = 'gender-btn' + (gender !== 'fille' ? ' active-garcon' : '');
+    document.getElementById('gender-fille').className  = 'gender-btn' + (gender === 'fille' ? ' active-fille'  : '');
+  }
+
   function renderAge() {
     if (document.getElementById('view-age').style.display === 'none') return;
-    
-    const now = new Date();
-    const diff = now - birthDate;
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+
+    const days   = Math.max(0, Math.floor((Date.now() - birthDate) / 86400000));
+    const weeks  = Math.floor(days / 7);
+    const months = Math.floor(days / 30.44);
+
     document.getElementById('age-days').textContent = days;
+
+    let sub = '';
+    if (days < 7)          sub = days === 1 ? '1 jour tout juste 🌟' : '';
+    else if (months < 2)   sub = `${weeks} semaine${weeks > 1 ? 's' : ''}`;
+    else                   sub = `${months} mois et ${days - Math.round(months * 30.44)} jours`;
+    document.getElementById('age-sub').textContent = sub;
+
+    const MILESTONES = [
+      [0,'🌟 Bienvenue au monde !'], [7,'🎉 1 semaine !'], [14,'✨ 2 semaines !'],
+      [21,'🌈 3 semaines !'], [30,'🎂 1 mois !'], [60,'🎉 2 mois !'],
+      [90,'🌟 3 mois !'], [120,'✨ 4 mois !'], [150,'🌈 5 mois !'], [180,'🎂 6 mois !'],
+      [270,'🌟 9 mois !'], [365,'🥳 1 an !'],
+    ];
+    const hit = MILESTONES.find(([d]) => d === days);
+    document.getElementById('age-milestone').textContent = hit ? hit[1] : '';
+
+    applyAgeTheme(babyGender);
   }
 
   function renderSoins() {
@@ -823,6 +930,15 @@
     } else {
       db.ref('soins').push({ type: 'vitamines', datetime: new Date().toISOString() });
     }
+  });
+
+  // Sélection fille / garçon
+  document.querySelectorAll('.gender-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      babyGender = btn.dataset.gender;
+      db.ref('settings/gender').set(babyGender);
+      applyAgeTheme(babyGender);
+    });
   });
 
   // Enregistrement de la date de naissance
