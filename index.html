@@ -957,38 +957,42 @@
   function childMesuresRef() { return db.ref(ur() + '/children/' + activeChildId + '/mesures'); }
 
   /* ── Auth ── */
-  function showAuthError(msg) {
+  /* ── Auth ── */
+  const auth = firebase.auth();
+
+  function setAuthError(msg) {
     const el = document.getElementById('auth-error');
     el.textContent = msg;
-    el.style.display = msg ? 'block' : 'none';
+    el.style.cssText = msg
+      ? 'display:block;color:#c0392b;font-size:.82rem;text-align:center;margin-bottom:8px;padding:8px;background:#fff0f0;border-radius:8px;border:1px solid #e17055'
+      : 'display:none';
   }
-  function translateAuthError(code) {
-    const map = {
-      'auth/user-not-found': 'Email inconnu.',
-      'auth/wrong-password': 'Mot de passe incorrect.',
-      'auth/invalid-credential': 'Email ou mot de passe incorrect.',
-      'auth/email-already-in-use': 'Cet email est déjà utilisé.',
-      'auth/weak-password': 'Mot de passe trop court (6 caractères min).',
-      'auth/invalid-email': 'Adresse email invalide.',
-      'auth/too-many-requests': 'Trop de tentatives. Réessayez plus tard.',
-      'auth/network-request-failed': 'Erreur réseau. Vérifiez votre connexion.',
-      'auth/popup-closed-by-user': '',
-      'auth/popup-blocked': 'Popup bloquée. Autorisez les popups pour ce site.',
-      'auth/cancelled-popup-request': '',
-      'auth/operation-not-allowed': 'Cette méthode de connexion n\'est pas activée dans Firebase Console.',
-      'auth/internal-error': 'Erreur interne Firebase. Vérifiez la configuration.',
-    };
-    return map[code] || ('Erreur (' + code + '). Réessayez.');
+
+  function authErrMsg(code) {
+    return ({
+      'auth/user-not-found':        'Aucun compte avec cet email.',
+      'auth/wrong-password':        'Mot de passe incorrect.',
+      'auth/invalid-credential':    'Email ou mot de passe incorrect.',
+      'auth/email-already-in-use':  'Cet email est déjà utilisé.',
+      'auth/weak-password':         'Mot de passe trop court (6 caractères min).',
+      'auth/invalid-email':         'Adresse email invalide.',
+      'auth/too-many-requests':     'Trop de tentatives. Réessayez plus tard.',
+      'auth/network-request-failed':'Erreur réseau.',
+      'auth/popup-blocked':         'Popup bloquée — autorisez les popups pour ce site.',
+      'auth/operation-not-allowed': 'Méthode non activée dans Firebase Console.',
+    })[code] || 'Erreur : ' + code;
   }
+
   function updateAuthUI() {
     const isL = authMode === 'login';
-    document.getElementById('auth-title').textContent      = isL ? 'Connexion' : 'Créer un compte';
-    document.getElementById('auth-submit').textContent     = isL ? 'Se connecter' : 'Créer mon compte';
+    document.getElementById('auth-title').textContent       = isL ? 'Connexion' : 'Créer un compte';
+    document.getElementById('auth-submit').textContent      = isL ? 'Se connecter' : 'Créer mon compte';
     document.getElementById('auth-toggle-text').textContent = isL ? 'Pas encore de compte ?' : 'Déjà inscrit ?';
     document.getElementById('auth-toggle-link').textContent = isL ? ' Créer un compte →' : '← Se connecter';
-    showAuthError('');
+    setAuthError('');
   }
-  firebase.auth().onAuthStateChanged(user => {
+
+  auth.onAuthStateChanged(user => {
     if (user) {
       currentUser = user;
       const ini = user.isAnonymous ? '👤' : (user.email ? user.email[0].toUpperCase() : '?');
@@ -1003,39 +1007,42 @@
       document.getElementById('app-content').style.display = 'none';
     }
   });
-  document.getElementById('auth-submit').addEventListener('click', () => {
+
+  document.getElementById('auth-submit').addEventListener('click', async () => {
     const email = document.getElementById('auth-email').value.trim();
     const pw    = document.getElementById('auth-password').value;
-    showAuthError('');
-    if (!email) { showAuthError('Entrez votre email.'); return; }
-    if (!pw)    { showAuthError('Entrez votre mot de passe.'); return; }
-    document.getElementById('auth-submit').disabled = true;
-    const fn = authMode === 'login'
-      ? firebase.auth().signInWithEmailAndPassword(email, pw)
-      : firebase.auth().createUserWithEmailAndPassword(email, pw);
-    fn.catch(err => {
-      console.error('Auth error:', err);
-      showAuthError(translateAuthError(err.code));
-    }).finally(() => { document.getElementById('auth-submit').disabled = false; });
+    setAuthError('');
+    if (!email || !pw) { setAuthError('Remplissez l\'email et le mot de passe.'); return; }
+    try {
+      if (authMode === 'login') {
+        await auth.signInWithEmailAndPassword(email, pw);
+      } else {
+        await auth.createUserWithEmailAndPassword(email, pw);
+      }
+    } catch (e) {
+      setAuthError(authErrMsg(e.code));
+    }
   });
-  document.getElementById('auth-google').addEventListener('click', () => {
-    showAuthError('');
-    firebase.auth().signInWithPopup(new firebase.auth.GoogleAuthProvider())
-      .catch(err => {
-        console.error('Google auth error:', err);
-        if (err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
-          showAuthError(translateAuthError(err.code));
-        }
-      });
+
+  document.getElementById('auth-google').addEventListener('click', async () => {
+    setAuthError('');
+    try {
+      await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
+    } catch (e) {
+      const silent = ['auth/popup-closed-by-user', 'auth/cancelled-popup-request'];
+      if (!silent.includes(e.code)) setAuthError(authErrMsg(e.code));
+    }
   });
+
   document.getElementById('auth-toggle-link').addEventListener('click', () => {
     authMode = authMode === 'login' ? 'register' : 'login';
     updateAuthUI();
   });
+
   document.getElementById('btn-logout').addEventListener('click', () => {
     if (!confirm('Se déconnecter ?')) return;
     cleanupApp();
-    firebase.auth().signOut();
+    auth.signOut();
   });
 
   /* ── Init App ── */
