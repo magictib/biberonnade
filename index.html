@@ -1122,9 +1122,63 @@
       document.getElementById('dot').className = 'sync-dot' + (ok ? '' : ' off');
       document.getElementById('sync-lbl').textContent = ok ? 'Synchronisé' : 'Hors ligne';
     });
+
+    // Chargement initial coordonné : on attend enfants propres ET liens co-parent
+    let ownSnap = null, linkedSnap = null, initDone = false;
+
+    function tryInitialLoad() {
+      if (ownSnap === null || linkedSnap === null || initDone) return;
+      initDone = true;
+      const ownData    = ownSnap.val();
+      const links      = linkedSnap.val() || {};
+      const ownerUids  = Object.keys(links).filter(k => links[k]);
+
+      if (ownData) {
+        loadChildren(ownSnap);
+      } else if (ownerUids.length > 0) {
+        // Pas d'enfants propres mais des liens → auto-sélectionner un enfant partagé
+        let pending = ownerUids.length;
+        ownerUids.forEach(ownerUid => {
+          db.ref('users/' + ownerUid + '/children').once('value', snap => {
+            const data = snap.val() || {};
+            Object.entries(data).forEach(([cid, c]) => {
+              if (c.profile) sharedChildren[cid] = { ...c.profile, _ownerUid: ownerUid };
+            });
+            pending--;
+            if (pending === 0) {
+              const savedId   = localStorage.getItem('acid_'   + currentUser.uid);
+              const savedOuid = localStorage.getItem('acouid_' + currentUser.uid);
+              if (savedId && sharedChildren[savedId]) {
+                activeChildId  = savedId;
+                activeOwnerUid = sharedChildren[savedId]._ownerUid;
+              } else {
+                const first    = Object.entries(sharedChildren)[0];
+                if (first) { activeChildId = first[0]; activeOwnerUid = first[1]._ownerUid; }
+              }
+              if (activeChildId) {
+                localStorage.setItem('acid_'   + currentUser.uid, activeChildId);
+                localStorage.setItem('acouid_' + currentUser.uid, activeOwnerUid);
+                renderChildSelector();
+                attachChildListeners();
+              } else {
+                loadChildren(null); // enfants partagés vides — fallback
+              }
+            }
+          });
+        });
+      } else {
+        loadChildren(null); // Aucune donnée → modal ajout enfant
+      }
+    }
+
     db.ref('users/' + currentUser.uid + '/children').once('value', snap => {
-      loadChildren(snap.val() ? snap : null);
+      ownSnap = snap; tryInitialLoad();
     });
+    db.ref('users/' + currentUser.uid + '/linkedTo').once('value', snap => {
+      linkedSnap = snap; tryInitialLoad();
+    });
+
+    // Listeners temps-réel (mises à jour après le chargement initial)
     db.ref('users/' + currentUser.uid + '/children').on('value', snap => {
       if (!snap.val()) return;
       const upd = {};
@@ -1134,9 +1188,8 @@
     });
 
     db.ref('users/' + currentUser.uid + '/linkedTo').on('value', snap => {
-      const links = snap.val() || {};
+      const links     = snap.val() || {};
       const ownerUids = Object.keys(links).filter(k => links[k]);
-      // Détacher listeners pour propriétaires supprimés
       Object.keys(linkedChildrenListeners).forEach(uid => {
         if (!ownerUids.includes(uid)) {
           linkedChildrenListeners[uid].off();
@@ -1146,7 +1199,6 @@
           });
         }
       });
-      // Attacher listeners temps-réel pour nouveaux propriétaires
       ownerUids.forEach(ownerUid => {
         if (linkedChildrenListeners[ownerUid]) return;
         const ref = db.ref('users/' + ownerUid + '/children');
