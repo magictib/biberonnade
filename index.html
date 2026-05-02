@@ -1316,6 +1316,17 @@
     return TYPES[e.type] || TYPES.sein_gauche;
   }
 
+  function fmtPoudreAge(iso) {
+    const totalMin = Math.floor((Date.now() - new Date(iso)) / 60000);
+    if (totalMin < 1)  return "à l'instant";
+    if (totalMin < 60) return totalMin + ' min';
+    const totalH = Math.floor(totalMin / 60);
+    if (totalH < 24)   return totalH + 'h';
+    const days = Math.floor(totalH / 24);
+    const remH = totalH % 24;
+    return remH > 0 ? days + 'j ' + remH + 'h' : days + 'j';
+  }
+
   function updateHeader() {
     const todayK = dateKey(new Date().toISOString());
     document.getElementById('cnt').textContent = entries.filter(e => dateKey(e.datetime) === todayK).length;
@@ -1324,8 +1335,7 @@
     const chipPoudre = document.getElementById('chip-poudre');
     if (lastPoudre) {
       const days = Math.floor((Date.now() - new Date(lastPoudre.datetime)) / 86400000);
-      document.getElementById('ago-poudre').textContent =
-        days === 0 ? "aujourd'hui" : days === 1 ? '1 jour' : days + ' jours';
+      document.getElementById('ago-poudre').textContent = fmtPoudreAge(lastPoudre.datetime);
       chipPoudre.className = 'chip' + (days >= 6 ? ' chip-alert' : days >= 4 ? ' chip-warn' : '');
     } else {
       document.getElementById('ago-poudre').textContent = '—';
@@ -1969,7 +1979,9 @@
   });
 
   document.getElementById('fc-delete').addEventListener('click', () => {
-    if (Object.keys(children).length <= 1) {
+    const ownCount    = Object.keys(children).length;
+    const sharedCount = Object.keys(sharedChildren).length;
+    if (ownCount <= 1 && sharedCount === 0) {
       alert('Impossible de supprimer le seul bébé enregistré.');
       return;
     }
@@ -1981,7 +1993,13 @@
 
     // Basculer vers un autre enfant avant de supprimer
     const otherId = Object.keys(children).find(id => id !== idToDelete);
-    switchChild(otherId);
+    if (otherId) {
+      switchChild(otherId, null);
+    } else {
+      // Plus d'enfant propre : basculer vers un enfant partagé
+      const sharedEntry = Object.entries(sharedChildren)[0];
+      if (sharedEntry) switchChild(sharedEntry[0], sharedEntry[1]._ownerUid);
+    }
 
     db.ref('users/' + currentUser.uid + '/children/' + idToDelete).remove();
     delete children[idToDelete];
