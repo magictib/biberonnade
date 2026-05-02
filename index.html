@@ -132,6 +132,34 @@
       color: #fff; font-size: 1.1rem; cursor: pointer;
       display: flex; align-items: center; justify-content: center;
     }
+    #btn-ifttt {
+      position: absolute; top: 56px; left: 14px;
+      width: 34px; height: 34px; border-radius: 50%;
+      background: rgba(255,255,255,.2); border: 1.5px solid rgba(255,255,255,.4);
+      color: #fff; font-size: 1rem; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+    }
+    /* ── IFTTT Modal ── */
+    #ifttt-overlay { position: fixed; inset: 0; z-index: 250; background: rgba(0,0,0,.55); display: none; align-items: flex-end; justify-content: center; }
+    .ifttt-sheet { background: white; border-radius: 24px 24px 0 0; padding: 20px 18px 36px; width: 100%; max-width: 540px; max-height: 88vh; overflow-y: auto; }
+    .ifttt-sheet h2 { font-size: 1.05rem; font-weight: 800; text-align: center; margin-bottom: 4px; }
+    .ifttt-sheet .ifttt-sub { font-size: .78rem; color: var(--muted); text-align: center; margin-bottom: 16px; }
+    .ifttt-steps { counter-reset: steps; }
+    .ifttt-step { display: flex; gap: 10px; margin-bottom: 18px; }
+    .ifttt-step-num { flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%; background: var(--primary); color: white; font-size: .8rem; font-weight: 800; display: flex; align-items: center; justify-content: center; margin-top: 1px; }
+    .ifttt-step-body { flex: 1; }
+    .ifttt-step-title { font-size: .85rem; font-weight: 800; margin-bottom: 5px; }
+    .ifttt-step-text { font-size: .78rem; color: var(--muted); line-height: 1.5; }
+    .ifttt-step-text a { color: var(--primary); font-weight: 700; }
+    .ifttt-url-block { background: #f7f7ff; border: 1.5px solid var(--border); border-radius: 10px; padding: 9px 10px; margin: 6px 0; display: flex; align-items: center; gap: 6px; }
+    .ifttt-url-label { font-size: .72rem; font-weight: 800; color: var(--primary); white-space: nowrap; }
+    .ifttt-url-text { font-size: .65rem; color: var(--muted); font-family: monospace; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .ifttt-copy-btn { flex-shrink: 0; padding: 4px 9px; background: var(--primary); color: white; border: none; border-radius: 7px; font-size: .7rem; font-weight: 700; cursor: pointer; font-family: inherit; }
+    .ifttt-copy-btn.copied { background: #00b894; }
+    .ifttt-rules-block { background: #1e1e2e; border-radius: 10px; padding: 10px 12px; margin: 6px 0; font-family: monospace; font-size: .72rem; color: #a29bfe; line-height: 1.6; position: relative; }
+    .ifttt-rules-copy { position: absolute; top: 8px; right: 8px; padding: 3px 8px; background: #a29bfe; color: white; border: none; border-radius: 6px; font-size: .65rem; font-weight: 700; cursor: pointer; font-family: inherit; }
+    .ifttt-rules-copy.copied { background: #00b894; }
+    .ifttt-close-btn { display: block; width: 100%; padding: 13px; margin-top: 18px; background: var(--bg); color: var(--text); border: 2px solid var(--border); border-radius: 14px; font-size: .95rem; font-weight: 700; cursor: pointer; font-family: inherit; }
     .cp-section-title {
       font-size: .78rem; font-weight: 700; color: var(--muted);
       text-transform: uppercase; letter-spacing: .4px; margin-bottom: 8px;
@@ -623,6 +651,7 @@
 
 <header style="position:relative">
   <button id="btn-coparent" title="Co-parent">👫</button>
+  <button id="btn-ifttt" title="Config Alexa / IFTTT">⚡</button>
   <button id="btn-logout" title="Déconnexion"><span id="user-initial">?</span></button>
   <h1 style="display:flex;align-items:center;justify-content:center;gap:8px">
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 110 68" height="34" style="flex-shrink:0">
@@ -959,6 +988,54 @@
       </div>
     </div>
     <div id="etapes-content"></div>
+  </div>
+</div>
+
+<!-- Modal IFTTT / Alexa -->
+<div id="ifttt-overlay">
+  <div class="ifttt-sheet">
+    <h2>⚡ Config Alexa + IFTTT</h2>
+    <p class="ifttt-sub">Dites "Alexa, trigger …" pour enregistrer une tétée sans toucher le téléphone</p>
+    <div class="ifttt-steps">
+
+      <div class="ifttt-step">
+        <div class="ifttt-step-num">1</div>
+        <div class="ifttt-step-body">
+          <div class="ifttt-step-title">Créer un compte IFTTT gratuit</div>
+          <div class="ifttt-step-text">Allez sur <a href="https://ifttt.com" target="_blank">ifttt.com</a> → <strong>Get started</strong> (juste email + mdp, 1 min)</div>
+        </div>
+      </div>
+
+      <div class="ifttt-step">
+        <div class="ifttt-step-num">2</div>
+        <div class="ifttt-step-body">
+          <div class="ifttt-step-title">Ajouter une règle Firebase (1 fois)</div>
+          <div class="ifttt-step-text">Dans la <a href="https://console.firebase.google.com/project/suivi-biberon/database/suivi-biberon-default-rtdb/rules" target="_blank">Console Firebase → Rules</a>, ajoutez ce bloc dans vos règles existantes&nbsp;:</div>
+          <div class="ifttt-rules-block" id="ifttt-rules-block">
+"ifttt_inbox": {
+  "$token": {
+    ".read": "auth !== null",
+    ".write": "true"
+  }
+}
+            <button class="ifttt-rules-copy" id="ifttt-rules-copy-btn">Copier</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="ifttt-step">
+        <div class="ifttt-step-num">3</div>
+        <div class="ifttt-step-body">
+          <div class="ifttt-step-title">Créer un applet par type de tétée</div>
+          <div class="ifttt-step-text">Dans IFTTT : <strong>Create</strong> → <em>If</em> : Alexa (Say a specific phrase) → <em>Then</em> : Webhooks (Make a web request)<br><br>
+          Méthode : <strong>POST</strong> — Content Type : <strong>application/json</strong><br>
+          URL et Body selon le type ci-dessous&nbsp;:</div>
+          <div id="ifttt-applets-list"></div>
+        </div>
+      </div>
+
+    </div>
+    <button class="ifttt-close-btn" id="ifttt-close-btn">Fermer</button>
   </div>
 </div>
 
@@ -1400,6 +1477,8 @@
     }
     children = {}; sharedChildren = {}; activeChildId = null; activeOwnerUid = null;
     entries = []; soins = []; mesures = []; etapes = {};
+    webhookToken = null;
+    if (iftttInboxRef) { iftttInboxRef.off(); iftttInboxRef = null; }
     render(); renderChildSelector();
   }
 
@@ -1447,6 +1526,7 @@
       babyGender = p.gender || 'garcon';
       bainReminderDays = (p.bainReminderDays !== undefined) ? p.bainReminderDays : 2;
       document.getElementById('bain-reminder-count').textContent = bainReminderDays;
+      initWebhookToken(p);
       renderAge(); checkReminders();
     });
     childMesuresRef().on('value', snap => {
@@ -1474,6 +1554,8 @@
     if (activeOwnerUid) localStorage.setItem('acouid_' + currentUser.uid, activeOwnerUid);
     else localStorage.removeItem('acouid_' + currentUser.uid);
     entries = []; soins = []; mesures = []; etapes = {};
+    webhookToken = null;
+    if (iftttInboxRef) { iftttInboxRef.off(); iftttInboxRef = null; }
     render(); renderStats(); renderSoins(); renderCroissance(); renderEtapes();
     renderChildSelector();
     attachChildListeners();
@@ -2441,6 +2523,108 @@
   });
 
   document.addEventListener('visibilitychange', () => { if (!document.hidden) checkReminders(); });
+
+  /* ── IFTTT / Alexa webhook ── */
+  let webhookToken = null;
+  let iftttInboxRef = null;
+
+  function generateWebhookToken() {
+    return 'xxxxxxxxxxxx4xxxyxxxxxxxxxxxxxxx'.replace(/[xy]/g, c => {
+      const r = Math.random() * 16 | 0;
+      return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
+    });
+  }
+
+  function iftttInboxPath() {
+    return 'ifttt_inbox/' + webhookToken;
+  }
+
+  function attachIftttListener() {
+    if (iftttInboxRef) { iftttInboxRef.off(); iftttInboxRef = null; }
+    if (!webhookToken || !activeChildId || activeOwnerUid) return;
+    iftttInboxRef = db.ref(iftttInboxPath());
+    iftttInboxRef.on('child_added', snap => {
+      const data = snap.val();
+      if (!data || !data.type) { snap.ref.remove(); return; }
+      let datetime;
+      if (typeof data.datetime === 'number') {
+        datetime = new Date(data.datetime).toISOString();
+      } else if (data.datetime && data.datetime['.sv'] !== 'timestamp') {
+        try { datetime = new Date(data.datetime).toISOString(); } catch(e) { datetime = new Date().toISOString(); }
+      } else {
+        datetime = new Date().toISOString();
+      }
+      const entry = { type: data.type, datetime };
+      if (data.biberon_type) entry.biberon_type = data.biberon_type;
+      if (data.duration)     entry.duration     = +data.duration;
+      if (data.quantity)     entry.quantity     = +data.quantity;
+      childEntriesRef().push(entry);
+      snap.ref.remove();
+    });
+  }
+
+  function initWebhookToken(profile) {
+    if (activeOwnerUid) return;
+    if (profile && profile.webhookToken) {
+      webhookToken = profile.webhookToken;
+    } else {
+      webhookToken = generateWebhookToken();
+      childProfileRef().update({ webhookToken });
+    }
+    attachIftttListener();
+  }
+
+  function buildIftttAppletsHTML() {
+    if (!webhookToken) return '';
+    const base = `https://suivi-biberon-default-rtdb.europe-west1.firebasedatabase.app/${iftttInboxPath()}.json`;
+    const applets = [
+      { phrase: 'sein gauche',      body: '{"type":"sein_gauche","datetime":{{TriggeredAt | date: "%s"}}000}',        label: 'Sein gauche' },
+      { phrase: 'sein droit',       body: '{"type":"sein_droit","datetime":{{TriggeredAt | date: "%s"}}000}',         label: 'Sein droit' },
+      { phrase: 'les deux seins',   body: '{"type":"les_deux","datetime":{{TriggeredAt | date: "%s"}}000}',           label: 'Les deux' },
+      { phrase: 'biberon maternel', body: '{"type":"biberon","biberon_type":"maternel","datetime":{{TriggeredAt | date: "%s"}}000}', label: 'Biberon maternel' },
+      { phrase: 'biberon poudre',   body: '{"type":"biberon","biberon_type":"poudre","datetime":{{TriggeredAt | date: "%s"}}000}',   label: 'Biberon poudre' },
+    ];
+    return applets.map((a, i) => `
+      <div class="ifttt-url-block" style="flex-direction:column;align-items:flex-start;gap:4px">
+        <div style="display:flex;align-items:center;gap:6px;width:100%">
+          <span class="ifttt-url-label">🗣 "${a.phrase}"</span>
+          <span style="flex:1;font-size:.72rem;font-weight:700;color:var(--text)">${a.label}</span>
+          <button class="ifttt-copy-btn" data-copy-url="${encodeURIComponent(base)}" data-idx="${i}">URL ⎘</button>
+        </div>
+        <div style="font-size:.65rem;color:var(--muted);font-family:monospace;word-break:break-all;line-height:1.5">
+          Body : <span style="color:#6c5ce7">${a.body.replace(/</g,'&lt;')}</span>
+        </div>
+      </div>`).join('');
+  }
+
+  function openIftttModal() {
+    document.getElementById('ifttt-applets-list').innerHTML = buildIftttAppletsHTML();
+    document.getElementById('ifttt-overlay').style.display = 'flex';
+    document.querySelectorAll('.ifttt-copy-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        navigator.clipboard.writeText(decodeURIComponent(btn.dataset.copyUrl)).then(() => {
+          btn.textContent = '✓ Copié'; btn.classList.add('copied');
+          setTimeout(() => { btn.textContent = 'URL ⎘'; btn.classList.remove('copied'); }, 2000);
+        });
+      });
+    });
+  }
+
+  document.getElementById('btn-ifttt').addEventListener('click', openIftttModal);
+  document.getElementById('ifttt-close-btn').addEventListener('click', () => {
+    document.getElementById('ifttt-overlay').style.display = 'none';
+  });
+  document.getElementById('ifttt-overlay').addEventListener('click', e => {
+    if (e.target === document.getElementById('ifttt-overlay'))
+      document.getElementById('ifttt-overlay').style.display = 'none';
+  });
+  document.getElementById('ifttt-rules-copy-btn').addEventListener('click', function() {
+    const rules = `"ifttt_inbox": {\n  "$token": {\n    ".read": "auth !== null",\n    ".write": "true"\n  }\n}`;
+    navigator.clipboard.writeText(rules).then(() => {
+      this.textContent = '✓ Copié'; this.classList.add('copied');
+      setTimeout(() => { this.textContent = 'Copier'; this.classList.remove('copied'); }, 2000);
+    });
+  });
 
   /* ── Étapes / Jalons ── */
   function fmtEtapeDate(dateStr) {
