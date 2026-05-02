@@ -557,6 +557,23 @@
     .etape-modal-btns { display: flex; gap: 8px; margin-top: 4px; }
     .etape-btn-save { flex: 1; padding: 13px; background: var(--primary); color: white; border: none; border-radius: 14px; font-size: .95rem; font-weight: 700; cursor: pointer; font-family: inherit; }
     .etape-btn-delete { padding: 13px 16px; background: #fff0f0; color: #c0392b; border: 2px solid #e17055; border-radius: 14px; font-size: .85rem; font-weight: 700; cursor: pointer; font-family: inherit; display: none; }
+
+    /* ── Messagerie ── */
+    .messages-page { display: flex; flex-direction: column; height: calc(100vh - 120px); padding: 0; }
+    .messages-list { flex: 1; overflow-y: auto; padding: 12px 14px; display: flex; flex-direction: column; gap: 6px; }
+    .msg-bubble { max-width: 78%; padding: 9px 13px; border-radius: 18px; font-size: .88rem; line-height: 1.4; word-break: break-word; }
+    .msg-mine  { align-self: flex-end;   background: var(--primary); color: #fff; border-bottom-right-radius: 4px; }
+    .msg-theirs{ align-self: flex-start; background: var(--card);    color: var(--text); border-bottom-left-radius: 4px; box-shadow: 0 2px 8px rgba(0,0,0,.07); }
+    .msg-time  { font-size: .63rem; opacity: .65; margin-top: 3px; display: block; }
+    .msg-sender{ font-size: .68rem; font-weight: 700; opacity: .75; margin-bottom: 2px; }
+    .messages-input-row { display: flex; gap: 8px; padding: 10px 12px 14px; background: var(--card); border-top: 1px solid var(--border); }
+    .messages-input-row textarea { flex: 1; border: 2px solid var(--border); border-radius: 14px; padding: 10px 12px; font-size: .93rem; font-family: inherit; resize: none; height: 42px; max-height: 100px; overflow-y: auto; color: var(--text); background: var(--bg); -webkit-appearance: none; }
+    .messages-input-row textarea:focus { outline: none; border-color: var(--primary); }
+    .msg-send-btn { width: 42px; height: 42px; border-radius: 50%; background: var(--primary); color: #fff; border: none; font-size: 1.2rem; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: transform .1s; }
+    .msg-send-btn:active { transform: scale(.92); }
+    .msg-empty { text-align: center; color: var(--muted); font-size: .85rem; padding: 30px 20px; }
+    .nav-badge { position: absolute; top: 4px; right: 10px; width: 8px; height: 8px; border-radius: 50%; background: #e17055; display: none; }
+    #nav-messages { position: relative; }
   </style>
 </head>
 <body>
@@ -928,6 +945,16 @@
   </div>
 </div>
 
+<div id="view-messages" style="display:none">
+  <div class="messages-page">
+    <div class="messages-list" id="messages-list"></div>
+    <div class="messages-input-row">
+      <textarea id="msg-input" placeholder="Message…" rows="1"></textarea>
+      <button class="msg-send-btn" id="msg-send-btn">➤</button>
+    </div>
+  </div>
+</div>
+
 <button class="fab" id="fab">+</button>
 
 <nav class="bottom-nav">
@@ -938,6 +965,7 @@
   <button class="nav-btn" id="nav-croissance"><span class="nav-icon">📏</span>Croissance</button>
   <button class="nav-btn" id="nav-etapes"><span class="nav-icon">🌟</span>Étapes</button>
   <button class="nav-btn" id="nav-infos"><span class="nav-icon">📋</span>Infos</button>
+  <button class="nav-btn" id="nav-messages"><span class="nav-icon">💬</span>Messages<span class="nav-badge" id="msg-badge"></span></button>
 </nav>
 
 <!-- Modal -->
@@ -1089,7 +1117,7 @@
     { key: 'premier_voyage',      label: 'Premier voyage',            icon: '🚗' },
   ];
 
-  let entries = [], soins = [], mesures = [], etapes = {};
+  let entries = [], soins = [], mesures = [], etapes = {}, messages = [];
   let etapeEditKey = null;
   let selType = 'sein_gauche', selBibType = 'maternel', editId = null;
   let statPeriod = 7, statMode = 'count';
@@ -1118,7 +1146,8 @@
   function childSoinsRef()   { return db.ref(ur() + '/children/' + activeChildId + '/soins'); }
   function childProfileRef() { return db.ref(ur() + '/children/' + activeChildId + '/profile'); }
   function childMesuresRef() { return db.ref(ur() + '/children/' + activeChildId + '/mesures'); }
-  function childEtapesRef()  { return db.ref(ur() + '/children/' + activeChildId + '/etapes'); }
+  function childEtapesRef()    { return db.ref(ur() + '/children/' + activeChildId + '/etapes'); }
+  function childMessagesRef()  { return db.ref(ur() + '/children/' + activeChildId + '/messages'); }
 
   /* ── Auth ── */
   /* ── Auth ── */
@@ -1344,9 +1373,10 @@
       db.ref(ownerPath + '/children/' + activeChildId + '/profile').off();
       db.ref(ownerPath + '/children/' + activeChildId + '/mesures').off();
       db.ref(ownerPath + '/children/' + activeChildId + '/etapes').off();
+      db.ref(ownerPath + '/children/' + activeChildId + '/messages').off();
     }
     children = {}; sharedChildren = {}; activeChildId = null; activeOwnerUid = null;
-    entries = []; soins = []; mesures = []; etapes = {};
+    entries = []; soins = []; mesures = []; etapes = {}; messages = [];
     render(); renderChildSelector();
   }
 
@@ -1404,6 +1434,12 @@
       etapes = snap.val() || {};
       renderEtapes();
     });
+    childMessagesRef().on('value', snap => {
+      const data = snap.val() || {};
+      messages = Object.entries(data).map(([id, v]) => ({ id, ...v }));
+      messages.sort((a, b) => new Date(a.datetime) - new Date(b.datetime));
+      renderMessages();
+    });
   }
 
   function switchChild(id, ownerUid) {
@@ -1414,14 +1450,15 @@
       db.ref(prevPath + '/children/' + activeChildId + '/profile').off();
       db.ref(prevPath + '/children/' + activeChildId + '/mesures').off();
       db.ref(prevPath + '/children/' + activeChildId + '/etapes').off();
+      db.ref(prevPath + '/children/' + activeChildId + '/messages').off();
     }
     activeOwnerUid = ownerUid || null;
     activeChildId = id;
     localStorage.setItem('acid_' + currentUser.uid, id);
     if (activeOwnerUid) localStorage.setItem('acouid_' + currentUser.uid, activeOwnerUid);
     else localStorage.removeItem('acouid_' + currentUser.uid);
-    entries = []; soins = []; mesures = []; etapes = {};
-    render(); renderStats(); renderSoins(); renderCroissance(); renderEtapes();
+    entries = []; soins = []; mesures = []; etapes = {}; messages = [];
+    render(); renderStats(); renderSoins(); renderCroissance(); renderEtapes(); renderMessages();
     renderChildSelector();
     attachChildListeners();
   }
@@ -1920,7 +1957,7 @@
 
   /* ── Navigation ── */
   function showTab(tab) {
-    ['journal','stats','age','soins','croissance','etapes','infos'].forEach(t => {
+    ['journal','stats','age','soins','croissance','etapes','infos','messages'].forEach(t => {
       document.getElementById('view-' + t).style.display = t === tab ? 'block' : 'none';
       document.getElementById('nav-' + t).classList.toggle('active', t === tab);
     });
@@ -1930,6 +1967,10 @@
     if (tab === 'soins') renderSoins();
     if (tab === 'croissance') renderCroissance();
     if (tab === 'etapes') renderEtapes();
+    if (tab === 'messages') {
+      document.getElementById('msg-badge').style.display = 'none';
+      scrollMessagesToBottom();
+    }
   }
 
   document.getElementById('nav-journal').addEventListener('click',    () => showTab('journal'));
@@ -1939,6 +1980,7 @@
   document.getElementById('nav-croissance').addEventListener('click', () => showTab('croissance'));
   document.getElementById('nav-etapes').addEventListener('click',     () => showTab('etapes'));
   document.getElementById('nav-infos').addEventListener('click',      () => showTab('infos'));
+  document.getElementById('nav-messages').addEventListener('click',   () => showTab('messages'));
 
   // Boutons + et − pour pipi / caca
   document.querySelectorAll('.soin-plus').forEach(btn => {
@@ -2474,6 +2516,57 @@
     if (!etapeEditKey) return;
     childEtapesRef().child(etapeEditKey).remove();
     closeEtapeModal();
+  });
+
+  /* ── Messagerie ── */
+  function scrollMessagesToBottom() {
+    const list = document.getElementById('messages-list');
+    if (list) list.scrollTop = list.scrollHeight;
+  }
+
+  function renderMessages() {
+    const list = document.getElementById('messages-list');
+    if (!list) return;
+    if (!messages.length) {
+      list.innerHTML = '<div class="msg-empty">Aucun message pour l\'instant.<br>Envoyez le premier 👋</div>';
+      return;
+    }
+    const isMessagesVisible = document.getElementById('view-messages').style.display !== 'none';
+    list.innerHTML = messages.map(m => {
+      const mine = m.uid === (currentUser && currentUser.uid);
+      const time = new Date(m.datetime).toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+      const sender = !mine ? `<div class="msg-sender">${m.name || 'Co-parent'}</div>` : '';
+      return `<div class="msg-bubble ${mine ? 'msg-mine' : 'msg-theirs'}">
+        ${sender}${m.text.replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>')}
+        <span class="msg-time">${time}</span>
+      </div>`;
+    }).join('');
+    if (isMessagesVisible) {
+      scrollMessagesToBottom();
+    } else {
+      document.getElementById('msg-badge').style.display = 'block';
+    }
+  }
+
+  function sendMessage() {
+    const input = document.getElementById('msg-input');
+    const text  = input.value.trim();
+    if (!text || !activeChildId) return;
+    const name  = (currentUser.displayName || currentUser.email || '').split(' ')[0] || 'Moi';
+    childMessagesRef().push({ text, uid: currentUser.uid, name, datetime: new Date().toISOString() });
+    input.value = '';
+    input.style.height = '42px';
+  }
+
+  document.getElementById('msg-send-btn').addEventListener('click', sendMessage);
+
+  document.getElementById('msg-input').addEventListener('keydown', e => {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); }
+  });
+
+  document.getElementById('msg-input').addEventListener('input', function() {
+    this.style.height = '42px';
+    this.style.height = Math.min(this.scrollHeight, 100) + 'px';
   });
 </script>
 
