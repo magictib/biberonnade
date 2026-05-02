@@ -1027,9 +1027,9 @@
         <div class="ifttt-step-num">3</div>
         <div class="ifttt-step-body">
           <div class="ifttt-step-title">Créer un applet par type de tétée</div>
-          <div class="ifttt-step-text">Dans IFTTT : <strong>Create</strong> → <em>If</em> : Alexa (Say a specific phrase) → <em>Then</em> : Webhooks (Make a web request)<br><br>
+          <div class="ifttt-step-text">Dans IFTTT : <strong>Create</strong> → <em>If</em> : Alexa → <em>Then</em> : Webhooks (Make a web request)<br><br>
           Méthode : <strong>POST</strong> — Content Type : <strong>application/json</strong><br>
-          URL et Body selon le type ci-dessous&nbsp;:</div>
+          Deux types de trigger selon si vous voulez dire la quantité ou pas :</div>
           <div id="ifttt-applets-list"></div>
         </div>
       </div>
@@ -2577,24 +2577,52 @@
   function buildIftttAppletsHTML() {
     if (!webhookToken) return '';
     const base = `https://suivi-biberon-default-rtdb.europe-west1.firebasedatabase.app/${iftttInboxPath()}.json`;
-    const applets = [
-      { phrase: 'sein gauche',      body: '{"type":"sein_gauche","datetime":{{TriggeredAt | date: "%s"}}000}',        label: 'Sein gauche' },
-      { phrase: 'sein droit',       body: '{"type":"sein_droit","datetime":{{TriggeredAt | date: "%s"}}000}',         label: 'Sein droit' },
-      { phrase: 'les deux seins',   body: '{"type":"les_deux","datetime":{{TriggeredAt | date: "%s"}}000}',           label: 'Les deux' },
-      { phrase: 'biberon maternel', body: '{"type":"biberon","biberon_type":"maternel","datetime":{{TriggeredAt | date: "%s"}}000}', label: 'Biberon maternel' },
-      { phrase: 'biberon poudre',   body: '{"type":"biberon","biberon_type":"poudre","datetime":{{TriggeredAt | date: "%s"}}000}',   label: 'Biberon poudre' },
+    const dt = '{{TriggeredAt | date: "%s"}}000';
+
+    const exact = [
+      { phrase: 'sein gauche',    body: `{"type":"sein_gauche","datetime":${dt}}`,                                    label: 'Sein gauche'     },
+      { phrase: 'sein droit',     body: `{"type":"sein_droit","datetime":${dt}}`,                                     label: 'Sein droit'      },
+      { phrase: 'les deux seins', body: `{"type":"les_deux","datetime":${dt}}`,                                       label: 'Les deux'        },
+      { phrase: 'biberon mat',    body: `{"type":"biberon","biberon_type":"maternel","datetime":${dt}}`,              label: 'Biberon maternel (sans quantité)' },
+      { phrase: 'biberon poudre', body: `{"type":"biberon","biberon_type":"poudre","datetime":${dt}}`,                label: 'Biberon poudre (sans quantité)'  },
     ];
-    return applets.map((a, i) => `
-      <div class="ifttt-url-block" style="flex-direction:column;align-items:flex-start;gap:4px">
-        <div style="display:flex;align-items:center;gap:6px;width:100%">
-          <span class="ifttt-url-label">🗣 "${a.phrase}"</span>
-          <span style="flex:1;font-size:.72rem;font-weight:700;color:var(--text)">${a.label}</span>
-          <button class="ifttt-copy-btn" data-copy-url="${encodeURIComponent(base)}" data-idx="${i}">URL ⎘</button>
-        </div>
-        <div style="font-size:.65rem;color:var(--muted);font-family:monospace;word-break:break-all;line-height:1.5">
-          Body : <span style="color:#6c5ce7">${a.body.replace(/</g,'&lt;')}</span>
-        </div>
-      </div>`).join('');
+    const withQty = [
+      { phrase: 'biberon mat #',    body: `{"type":"biberon","biberon_type":"maternel","quantity":{{NumberField}},"datetime":${dt}}`, label: 'Biberon maternel + quantité' },
+      { phrase: 'biberon poudre #', body: `{"type":"biberon","biberon_type":"poudre","quantity":{{NumberField}},"datetime":${dt}}`,   label: 'Biberon poudre + quantité'   },
+    ];
+
+    function appletCard(a, i, hasNum) {
+      const encodedUrl = encodeURIComponent(base);
+      const triggerType = hasNum
+        ? '<span style="background:#fdcb6e;color:#7a5800;padding:1px 6px;border-radius:6px;font-size:.65rem;font-weight:800">Phrase + nombre</span>'
+        : '<span style="background:#dfe6e9;color:var(--muted);padding:1px 6px;border-radius:6px;font-size:.65rem;font-weight:800">Phrase exacte</span>';
+      return `
+        <div class="ifttt-url-block" style="flex-direction:column;align-items:flex-start;gap:5px">
+          <div style="display:flex;align-items:center;gap:6px;width:100%;flex-wrap:wrap">
+            ${triggerType}
+            <span style="font-size:.75rem;font-weight:800;color:var(--text);flex:1">🗣 "${a.phrase}"  →  ${a.label}</span>
+            <button class="ifttt-copy-btn" data-copy-url="${encodedUrl}" data-idx="${i}">URL ⎘</button>
+          </div>
+          <div style="font-size:.63rem;color:var(--muted);font-family:monospace;word-break:break-all;line-height:1.6">
+            Body&nbsp;: <span style="color:#6c5ce7">${a.body.replace(/</g,'&lt;')}</span>
+          </div>
+        </div>`;
+    }
+
+    return `
+      <div style="font-size:.75rem;color:#636e72;background:#fff9e6;border:1.5px solid #f9d71c;border-radius:10px;padding:9px 11px;margin:8px 0;line-height:1.6">
+        ⏱ <strong>L'heure</strong> est celle du déclenchement vocal.<br>
+        Pour la corriger, tapez l'entrée dans le journal et modifiez la date/heure.
+      </div>
+      <div style="font-size:.8rem;font-weight:800;color:var(--muted);margin:10px 0 6px">Seins &amp; biberon sans quantité <em>(trigger : "Say a specific phrase")</em></div>
+      ${exact.map((a, i) => appletCard(a, i, false)).join('')}
+      <div style="font-size:.8rem;font-weight:800;color:var(--muted);margin:14px 0 6px">Biberon avec quantité en ml <em>(trigger : "Say a phrase with a number")</em></div>
+      <div style="font-size:.73rem;color:var(--muted);margin-bottom:8px;line-height:1.5">
+        Dites par ex. <strong>"Alexa, trigger biberon poudre 120"</strong> → enregistre 120 ml.<br>
+        Dans IFTTT, choisissez le trigger <em>"Say a phrase with a number"</em> (et non "specific phrase").
+      </div>
+      ${withQty.map((a, i) => appletCard(a, i, true)).join('')}
+    `;
   }
 
   function openIftttModal() {
