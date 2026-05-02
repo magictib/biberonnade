@@ -994,23 +994,76 @@
 <!-- Modal IFTTT / Alexa -->
 <div id="ifttt-overlay">
   <div class="ifttt-sheet">
-    <h2>⚡ Config Alexa + IFTTT</h2>
-    <p class="ifttt-sub">Dites "Alexa, trigger …" pour enregistrer une tétée sans toucher le téléphone</p>
+    <h2>⚡ Config Alexa Skill</h2>
+    <p class="ifttt-sub">Dites "Alexa, ouvre biberonnade" puis "sein gauche" ou "biberon poudre cent vingt"</p>
     <div class="ifttt-steps">
 
       <div class="ifttt-step">
         <div class="ifttt-step-num">1</div>
         <div class="ifttt-step-body">
-          <div class="ifttt-step-title">Créer un compte IFTTT gratuit</div>
-          <div class="ifttt-step-text">Allez sur <a href="https://ifttt.com" target="_blank">ifttt.com</a> → <strong>Get started</strong> (juste email + mdp, 1 min)</div>
+          <div class="ifttt-step-title">Compte développeur Amazon (gratuit)</div>
+          <div class="ifttt-step-text">Allez sur <a href="https://developer.amazon.com/alexa/console/ask" target="_blank">developer.amazon.com/alexa/console/ask</a> → connectez-vous avec votre compte Amazon habituel (celui de l'enceinte).</div>
         </div>
       </div>
 
       <div class="ifttt-step">
         <div class="ifttt-step-num">2</div>
         <div class="ifttt-step-body">
-          <div class="ifttt-step-title">Ajouter une règle Firebase (1 fois)</div>
-          <div class="ifttt-step-text">Dans la <a href="https://console.firebase.google.com/project/suivi-biberon/database/suivi-biberon-default-rtdb/rules" target="_blank">Console Firebase → Rules</a>, ajoutez ce bloc dans vos règles existantes&nbsp;:</div>
+          <div class="ifttt-step-title">Créer la skill</div>
+          <div class="ifttt-step-text">
+            Cliquez <strong>Create Skill</strong><br>
+            • Nom : <strong>Biberonnade</strong><br>
+            • Langue : <strong>French (FR)</strong><br>
+            • Model : <strong>Custom</strong><br>
+            • Backend : <strong>Alexa-Hosted (Node.js)</strong> ← pas besoin d'AWS !<br>
+            • Template : <strong>Hello World</strong> → cliquez <strong>Create Skill</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="ifttt-step">
+        <div class="ifttt-step-num">3</div>
+        <div class="ifttt-step-body">
+          <div class="ifttt-step-title">Coller le modèle de conversation</div>
+          <div class="ifttt-step-text">
+            Dans l'onglet <strong>Build</strong> → menu gauche <strong>JSON Editor</strong><br>
+            Effacez tout et collez le contenu du fichier <strong>alexa-skill/interaction-model.json</strong> (disponible sur GitHub)<br>
+            Cliquez <strong>Save Model</strong> puis <strong>Build Model</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="ifttt-step">
+        <div class="ifttt-step-num">4</div>
+        <div class="ifttt-step-body">
+          <div class="ifttt-step-title">Coller le code + votre token secret</div>
+          <div class="ifttt-step-text">
+            Dans l'onglet <strong>Code</strong> → remplacez le contenu de <strong>index.js</strong> par le fichier <strong>alexa-skill/lambda/index.js</strong> (sur GitHub)<br><br>
+            Toujours dans l'onglet Code → cliquez <strong>Environment variables</strong> (en haut à droite)<br>
+            Ajoutez une variable :<br>
+            • Clé : <strong>WEBHOOK_TOKEN</strong><br>
+            • Valeur : votre token ci-dessous
+          </div>
+          <div style="margin-top:8px">
+            <div class="ifttt-url-block" style="flex-direction:column;align-items:flex-start;gap:6px">
+              <div style="font-size:.75rem;font-weight:800;color:var(--text)">🔑 Votre token secret</div>
+              <div style="display:flex;align-items:center;gap:8px;width:100%">
+                <div class="ifttt-url-text" id="ifttt-token-display" style="font-size:.72rem;font-weight:700;color:var(--primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Chargement…</div>
+                <button class="ifttt-copy-btn" id="ifttt-token-copy-btn">Token ⎘</button>
+              </div>
+            </div>
+          </div>
+          <div class="ifttt-step-text" style="margin-top:8px">
+            Cliquez <strong>Save</strong> puis <strong>Deploy</strong>
+          </div>
+        </div>
+      </div>
+
+      <div class="ifttt-step">
+        <div class="ifttt-step-num">5</div>
+        <div class="ifttt-step-body">
+          <div class="ifttt-step-title">Ajouter la règle Firebase (1 fois)</div>
+          <div class="ifttt-step-text">Dans la <a href="https://console.firebase.google.com/project/suivi-biberon/database/suivi-biberon-default-rtdb/rules" target="_blank">Console Firebase → Rules</a>, ajoutez ce bloc&nbsp;:</div>
           <div class="ifttt-rules-block" id="ifttt-rules-block">
 "ifttt_inbox": {
   "$token": {
@@ -1024,16 +1077,24 @@
       </div>
 
       <div class="ifttt-step">
-        <div class="ifttt-step-num">3</div>
+        <div class="ifttt-step-num">6</div>
         <div class="ifttt-step-body">
-          <div class="ifttt-step-title">Créer un applet par type de tétée</div>
-          <div class="ifttt-step-text">Dans IFTTT : <strong>Create</strong> → <em>If</em> : Alexa → <em>Then</em> : Webhooks (Make a web request)<br><br>
-          Méthode : <strong>POST</strong> — Content Type : <strong>application/json</strong><br>
-          Deux types de trigger selon si vous voulez dire la quantité ou pas :</div>
-          <div id="ifttt-applets-list"></div>
+          <div class="ifttt-step-title">Tester</div>
+          <div class="ifttt-step-text">
+            Dans l'onglet <strong>Test</strong> de la console Alexa → activez le mode test.<br>
+            Dites sur votre enceinte : <strong>"Alexa, ouvre biberonnade"</strong><br>
+            Puis : <strong>"sein gauche"</strong> ou <strong>"biberon poudre cent vingt"</strong><br><br>
+            La skill reste en mode dev et fonctionne sur tous les appareils Alexa liés à votre compte Amazon.
+          </div>
         </div>
       </div>
 
+    </div>
+    <div style="background:#f0fff8;border:1.5px solid #00b894;border-radius:10px;padding:10px 12px;font-size:.75rem;line-height:1.6;margin-bottom:4px">
+      🗣 <strong>Commandes vocales :</strong><br>
+      "Alexa, ouvre biberonnade" → puis "sein gauche / sein droit / les deux seins"<br>
+      "Alexa, ouvre biberonnade" → puis "biberon maternel" ou "biberon poudre cent vingt"<br>
+      Ou en une phrase : <strong>"Alexa, dis à biberonnade sein gauche"</strong>
     </div>
     <button class="ifttt-close-btn" id="ifttt-close-btn">Fermer</button>
   </div>
@@ -2626,16 +2687,22 @@
   }
 
   function openIftttModal() {
-    document.getElementById('ifttt-applets-list').innerHTML = buildIftttAppletsHTML();
+    // Token secret
+    const tokenDisplay = document.getElementById('ifttt-token-display');
+    if (tokenDisplay) tokenDisplay.textContent = webhookToken || '—';
+
     document.getElementById('ifttt-overlay').style.display = 'flex';
-    document.querySelectorAll('.ifttt-copy-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        navigator.clipboard.writeText(decodeURIComponent(btn.dataset.copyUrl)).then(() => {
-          btn.textContent = '✓ Copié'; btn.classList.add('copied');
-          setTimeout(() => { btn.textContent = 'URL ⎘'; btn.classList.remove('copied'); }, 2000);
+
+    // Bouton copier le token
+    const tokenCopyBtn = document.getElementById('ifttt-token-copy-btn');
+    if (tokenCopyBtn && webhookToken) {
+      tokenCopyBtn.onclick = () => {
+        navigator.clipboard.writeText(webhookToken).then(() => {
+          tokenCopyBtn.textContent = '✓ Copié'; tokenCopyBtn.classList.add('copied');
+          setTimeout(() => { tokenCopyBtn.textContent = 'Token ⎘'; tokenCopyBtn.classList.remove('copied'); }, 2000);
         });
-      });
-    });
+      };
+    }
   }
 
   document.getElementById('btn-ifttt').addEventListener('click', openIftttModal);

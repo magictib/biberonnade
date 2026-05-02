@@ -1,0 +1,94 @@
+{
+  "interactionModel": {
+    "languageModel": {
+      "invocationName": "biberonnade",
+      "intents": [
+        {
+          "name": "SeinGaucheIntent",
+          "slots": [],
+          "samples": [
+            "sein gauche",
+            "tétée gauche",
+            "côté gauche",
+            "gauche"
+          ]
+        },
+        {
+          "name": "SeinDroitIntent",
+          "slots": [],
+          "samples": [
+            "sein droit",
+            "tétée droite",
+            "côté droit",
+            "droit"
+          ]
+        },
+        {
+          "name": "LesDeuxIntent",
+          "slots": [],
+          "samples": [
+            "les deux",
+            "les deux seins",
+            "les deux côtés",
+            "tétée des deux côtés"
+          ]
+        },
+        {
+          "name": "BiberonIntent",
+          "slots": [
+            {
+              "name": "quantite",
+              "type": "AMAZON.NUMBER"
+            },
+            {
+              "name": "typeLait",
+              "type": "TypeLait"
+            }
+          ],
+          "samples": [
+            "biberon {typeLait}",
+            "biberon {typeLait} de {quantite} millilitres",
+            "biberon {typeLait} {quantite} millilitres",
+            "biberon {typeLait} {quantite}",
+            "biberon de {quantite} millilitres {typeLait}",
+            "biberon {quantite} millilitres {typeLait}",
+            "biberon {quantite} {typeLait}"
+          ]
+        },
+        {
+          "name": "AMAZON.HelpIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.CancelIntent",
+          "samples": []
+        },
+        {
+          "name": "AMAZON.StopIntent",
+          "samples": []
+        }
+      ],
+      "types": [
+        {
+          "name": "TypeLait",
+          "values": [
+            {
+              "id": "maternel",
+              "name": {
+                "value": "maternel",
+                "synonyms": ["maternel", "lait maternel", "du sein", "allaitement"]
+              }
+            },
+            {
+              "id": "poudre",
+              "name": {
+                "value": "poudre",
+                "synonyms": ["poudre", "en poudre", "lait en poudre", "de la poudre", "préparation"]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
