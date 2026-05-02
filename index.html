@@ -958,24 +958,37 @@
   function childMesuresRef() { return db.ref(ur() + '/children/' + activeChildId + '/mesures'); }
 
   /* ── Auth ── */
+  function showAuthError(msg) {
+    const el = document.getElementById('auth-error');
+    el.textContent = msg;
+    el.style.display = msg ? 'block' : 'none';
+  }
   function translateAuthError(code) {
-    return ({ 'auth/user-not-found':'Email inconnu.', 'auth/wrong-password':'Mot de passe incorrect.',
-      'auth/invalid-credential':'Email ou mot de passe incorrect.',
-      'auth/email-already-in-use':'Email déjà utilisé.', 'auth/weak-password':'6 caractères minimum.',
-      'auth/invalid-email':'Email invalide.', 'auth/too-many-requests':'Trop de tentatives.',
-      'auth/network-request-failed':'Erreur réseau.', 'auth/popup-closed-by-user':'' })[code] || 'Erreur. Réessayez.';
+    const map = {
+      'auth/user-not-found': 'Email inconnu.',
+      'auth/wrong-password': 'Mot de passe incorrect.',
+      'auth/invalid-credential': 'Email ou mot de passe incorrect.',
+      'auth/email-already-in-use': 'Cet email est déjà utilisé.',
+      'auth/weak-password': 'Mot de passe trop court (6 caractères min).',
+      'auth/invalid-email': 'Adresse email invalide.',
+      'auth/too-many-requests': 'Trop de tentatives. Réessayez plus tard.',
+      'auth/network-request-failed': 'Erreur réseau. Vérifiez votre connexion.',
+      'auth/popup-closed-by-user': '',
+      'auth/popup-blocked': 'Popup bloquée. Autorisez les popups pour ce site.',
+      'auth/cancelled-popup-request': '',
+      'auth/operation-not-allowed': 'Cette méthode de connexion n\'est pas activée dans Firebase Console.',
+      'auth/internal-error': 'Erreur interne Firebase. Vérifiez la configuration.',
+    };
+    return map[code] || ('Erreur (' + code + '). Réessayez.');
   }
   function updateAuthUI() {
     const isL = authMode === 'login';
-    document.getElementById('auth-title').textContent = isL ? 'Connexion' : 'Créer un compte';
-    document.getElementById('auth-submit').textContent = isL ? 'Se connecter' : 'Créer mon compte';
+    document.getElementById('auth-title').textContent      = isL ? 'Connexion' : 'Créer un compte';
+    document.getElementById('auth-submit').textContent     = isL ? 'Se connecter' : 'Créer mon compte';
     document.getElementById('auth-toggle-text').textContent = isL ? 'Pas encore de compte ?' : 'Déjà inscrit ?';
     document.getElementById('auth-toggle-link').textContent = isL ? ' Créer un compte →' : '← Se connecter';
-    document.getElementById('auth-error').textContent = '';
+    showAuthError('');
   }
-  firebase.auth().getRedirectResult().catch(err => {
-    if (err.code) document.getElementById('auth-error').textContent = translateAuthError(err.code);
-  });
   firebase.auth().onAuthStateChanged(user => {
     if (user) {
       currentUser = user;
@@ -994,20 +1007,36 @@
   document.getElementById('auth-submit').addEventListener('click', () => {
     const email = document.getElementById('auth-email').value.trim();
     const pw    = document.getElementById('auth-password').value;
-    document.getElementById('auth-error').textContent = '';
-    if (!email || !pw) return;
+    showAuthError('');
+    if (!email) { showAuthError('Entrez votre email.'); return; }
+    if (!pw)    { showAuthError('Entrez votre mot de passe.'); return; }
+    document.getElementById('auth-submit').disabled = true;
     const fn = authMode === 'login'
       ? firebase.auth().signInWithEmailAndPassword(email, pw)
       : firebase.auth().createUserWithEmailAndPassword(email, pw);
-    fn.catch(err => { document.getElementById('auth-error').textContent = translateAuthError(err.code); });
+    fn.catch(err => {
+      console.error('Auth error:', err);
+      showAuthError(translateAuthError(err.code));
+    }).finally(() => { document.getElementById('auth-submit').disabled = false; });
   });
   document.getElementById('auth-google').addEventListener('click', () => {
-    firebase.auth().signInWithRedirect(new firebase.auth.GoogleAuthProvider())
-      .catch(err => { document.getElementById('auth-error').textContent = translateAuthError(err.code); });
+    showAuthError('');
+    firebase.auth().signInWithPopup(new firebase.auth.GoogleAuthProvider())
+      .catch(err => {
+        console.error('Google auth error:', err);
+        if (err.code !== 'auth/popup-closed-by-user' && err.code !== 'auth/cancelled-popup-request') {
+          showAuthError(translateAuthError(err.code));
+        }
+      });
   });
   document.getElementById('auth-anonymous').addEventListener('click', () => {
+    showAuthError('');
+    document.getElementById('auth-anonymous').disabled = true;
     firebase.auth().signInAnonymously()
-      .catch(err => { document.getElementById('auth-error').textContent = translateAuthError(err.code); });
+      .catch(err => {
+        console.error('Anon auth error:', err);
+        showAuthError(translateAuthError(err.code));
+      }).finally(() => { document.getElementById('auth-anonymous').disabled = false; });
   });
   document.getElementById('auth-toggle-link').addEventListener('click', () => {
     authMode = authMode === 'login' ? 'register' : 'login';
