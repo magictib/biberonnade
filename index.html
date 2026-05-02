@@ -8,6 +8,7 @@
   <title>Tétées</title>
   <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
   <style>
     :root {
       --primary: #6c5ce7;
@@ -41,20 +42,149 @@
     }
     .fab:active { transform: scale(.92); }
 
-    /* ── Bottom nav ── */
+    /* ── Bottom nav (défilant) ── */
     .bottom-nav {
       position: fixed; bottom: 0; left: 0; right: 0; height: 60px;
       background: var(--card); border-top: 1px solid var(--border);
       display: flex; z-index: 100; box-shadow: 0 -2px 12px rgba(0,0,0,.06);
+      overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none;
     }
+    .bottom-nav::-webkit-scrollbar { display: none; }
     .nav-btn {
-      flex: 1; border: none; background: none; cursor: pointer; font-family: inherit;
-      font-size: .72rem; font-weight: 600; color: var(--muted);
+      min-width: 72px; flex-shrink: 0;
+      border: none; background: none; cursor: pointer; font-family: inherit;
+      font-size: .68rem; font-weight: 600; color: var(--muted);
       display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
       transition: color .15s;
     }
-    .nav-btn .nav-icon { font-size: 1.4rem; }
+    .nav-btn .nav-icon { font-size: 1.35rem; }
     .nav-btn.active { color: var(--primary); }
+
+    /* ── Auth overlay ── */
+    #auth-overlay {
+      position: fixed; inset: 0; z-index: 400;
+      background: linear-gradient(145deg, #5a4bd1 0%, #a29bfe 100%);
+      display: flex; align-items: center; justify-content: center; padding: 20px;
+    }
+    .auth-card {
+      background: #fff; border-radius: 24px; padding: 28px 22px 24px;
+      width: 100%; max-width: 360px; box-shadow: 0 20px 60px rgba(0,0,0,.25);
+    }
+    .auth-logo { text-align: center; font-size: 2.8rem; margin-bottom: 4px; }
+    .auth-app-name { text-align: center; font-size: 1.3rem; font-weight: 900; color: var(--primary); margin-bottom: 2px; }
+    .auth-app-sub { text-align: center; font-size: .8rem; color: var(--muted); margin-bottom: 20px; }
+    #auth-title { text-align: center; font-size: 1rem; font-weight: 800; color: var(--text); margin-bottom: 14px; }
+    .auth-input {
+      width: 100%; padding: 13px 14px; border: 2px solid var(--border); border-radius: 12px;
+      font-size: .95rem; font-family: inherit; color: var(--text); margin-bottom: 10px;
+      -webkit-appearance: none; background: #fff;
+    }
+    .auth-input:focus { outline: none; border-color: var(--primary); }
+    .auth-btn-primary {
+      width: 100%; padding: 14px; background: var(--primary); color: #fff; border: none;
+      border-radius: 13px; font-size: .95rem; font-weight: 700; font-family: inherit;
+      cursor: pointer; margin-bottom: 8px; transition: transform .1s;
+    }
+    .auth-btn-primary:active { transform: scale(.97); }
+    .auth-btn-secondary {
+      width: 100%; padding: 12px; background: #fff; color: #444;
+      border: 2px solid var(--border); border-radius: 13px;
+      font-size: .88rem; font-weight: 600; font-family: inherit; cursor: pointer;
+      margin-bottom: 8px; display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .auth-divider { text-align: center; color: var(--muted); font-size: .75rem; margin: 4px 0 8px; }
+    .auth-error { color: #c0392b; font-size: .8rem; text-align: center; min-height: 1.1em; margin-bottom: 6px; }
+    .auth-toggle { text-align: center; font-size: .82rem; color: var(--muted); margin-top: 10px; }
+    .auth-toggle-link { color: var(--primary); font-weight: 700; cursor: pointer; text-decoration: none; }
+    #btn-logout {
+      position: absolute; top: 14px; right: 14px;
+      width: 34px; height: 34px; border-radius: 50%;
+      background: rgba(255,255,255,.2); border: 1.5px solid rgba(255,255,255,.4);
+      color: #fff; font-size: .85rem; font-weight: 800; cursor: pointer;
+      display: flex; align-items: center; justify-content: center; font-family: inherit;
+    }
+
+    /* ── Croissance ── */
+    .croissance-page { padding: 16px; max-width: 600px; margin: 0 auto; }
+    .crois-tabs { display: flex; gap: 8px; margin-bottom: 14px; }
+    .crois-tab-btn {
+      flex: 1; padding: 11px; border: 2px solid var(--border); border-radius: 12px;
+      background: #fff; cursor: pointer; font-family: inherit;
+      font-size: .88rem; font-weight: 700; color: var(--muted); transition: all .14s;
+    }
+    .crois-tab-btn.active { border-color: var(--primary); background: var(--primary); color: #fff; }
+    .crois-latest-card {
+      background: var(--primary); color: #fff; border-radius: var(--r);
+      padding: 18px; text-align: center; margin-bottom: 14px; box-shadow: var(--shadow);
+    }
+    .crois-latest-val { font-size: 2.8rem; font-weight: 900; line-height: 1; }
+    .crois-latest-date { font-size: .8rem; opacity: .75; margin-top: 6px; }
+    .crois-add-form { background: var(--card); border-radius: var(--r); padding: 14px 16px; box-shadow: var(--shadow); margin-bottom: 14px; }
+    .crois-form-row { display: flex; gap: 8px; align-items: center; }
+    .crois-input {
+      flex: 1; padding: 12px; border: 2px solid var(--border); border-radius: 12px;
+      font-size: 1rem; font-family: inherit; color: var(--text); -webkit-appearance: none;
+    }
+    .crois-input:focus { outline: none; border-color: var(--primary); }
+    .crois-unit { font-size: .85rem; font-weight: 700; color: var(--muted); min-width: 24px; }
+    .crois-date-input {
+      flex: 1; padding: 12px; border: 2px solid var(--border); border-radius: 12px;
+      font-size: .9rem; font-family: inherit; color: var(--text); -webkit-appearance: none;
+    }
+    .crois-date-input:focus { outline: none; border-color: var(--primary); }
+    .crois-save-btn {
+      padding: 12px 16px; background: var(--primary); color: #fff; border: none;
+      border-radius: 12px; font-weight: 700; font-family: inherit; cursor: pointer; font-size: .9rem;
+    }
+    .crois-list-card { background: var(--card); border-radius: var(--r); padding: 12px 16px; box-shadow: var(--shadow); }
+    .crois-entry { display: flex; justify-content: space-between; align-items: center; padding: 9px 0; border-bottom: 1px solid var(--border); }
+    .crois-entry:last-child { border-bottom: none; }
+    .crois-entry-val { font-weight: 800; font-size: 1rem; color: var(--primary); }
+    .crois-entry-date { font-size: .78rem; color: var(--muted); margin-top: 1px; }
+    .crois-entry-del { color: #c0392b; cursor: pointer; padding: 0 4px; font-size: 1.1rem; }
+    .chart-scroll-wrap svg { max-width: 100%; }
+
+    /* ── Infos ── */
+    .infos-page { padding: 16px; max-width: 600px; margin: 0 auto; }
+    .info-guide { margin-bottom: 28px; }
+    .info-guide-title { font-size: 1rem; font-weight: 800; color: var(--text); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+    /* Temp guide */
+    .temp-row { display: flex; margin-bottom: 6px; border-radius: 12px; overflow: hidden; box-shadow: var(--shadow); }
+    .temp-range { min-width: 82px; padding: 11px 8px; text-align: center; display: flex; flex-direction: column; align-items: center; justify-content: center; flex-shrink: 0; }
+    .temp-deg { font-size: .88rem; font-weight: 800; }
+    .temp-season { font-size: .62rem; opacity: .8; margin-top: 2px; }
+    .temp-details { flex: 1; background: var(--card); padding: 10px 12px; display: flex; flex-direction: column; gap: 3px; }
+    .temp-int, .temp-ext { font-size: .79rem; color: var(--text); line-height: 1.3; }
+    .temp-int b, .temp-ext b { font-size: .67rem; text-transform: uppercase; letter-spacing: .3px; color: var(--muted); }
+    /* Info table */
+    .info-table { width: 100%; border-collapse: collapse; background: var(--card); border-radius: var(--r); overflow: hidden; box-shadow: var(--shadow); font-size: .8rem; }
+    .info-table th { background: var(--primary); color: #fff; padding: 9px 6px; text-align: center; font-size: .73rem; }
+    .info-table td { padding: 9px 6px; text-align: center; border-bottom: 1px solid var(--border); vertical-align: middle; }
+    .info-table tr:last-child td { border-bottom: none; }
+    .info-table tr:nth-child(even) td { background: #f8f7ff; }
+    .info-table td:first-child { font-weight: 700; color: var(--primary); }
+    /* Selles */
+    .selles-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 10px; }
+    .selle-card { background: var(--card); border-radius: 12px; padding: 10px 6px; text-align: center; box-shadow: var(--shadow); }
+    .selle-dot { width: 36px; height: 36px; border-radius: 50%; margin: 0 auto 6px; }
+    .selle-label { font-size: .75rem; font-weight: 800; margin-bottom: 3px; }
+    .selle-desc { font-size: .66rem; color: var(--muted); line-height: 1.3; }
+    .selle-alert { border: 2px solid #e17055; }
+    .selle-alert .selle-label { color: #a84432; }
+    .selle-texture-row { display: flex; gap: 8px; }
+    .selle-texture-card { flex: 1; background: var(--card); border-radius: 12px; padding: 10px 8px; text-align: center; box-shadow: var(--shadow); }
+    .selle-texture-icon { font-size: 1.4rem; margin-bottom: 4px; }
+    .selle-texture-label { font-size: .75rem; font-weight: 700; margin-bottom: 2px; }
+    .selle-texture-desc { font-size: .66rem; color: var(--muted); }
+    /* Milestones */
+    .milestone-age { display: inline-block; background: var(--primary); color: #fff; border-radius: 20px; padding: 5px 14px; font-size: .8rem; font-weight: 700; margin-bottom: 8px; }
+    .milestone-tags { display: flex; flex-wrap: wrap; gap: 5px; margin-bottom: 14px; }
+    .mtag { border-radius: 20px; padding: 4px 10px; font-size: .73rem; font-weight: 600; border: 1.5px solid; }
+    .mtag-m { background: #e8f4fe; color: #1a5fa8; border-color: #74b9ff; }
+    .mtag-s { background: #ffeef5; color: #c0296a; border-color: #fd79a8; }
+    .mtag-c { background: #e6faf5; color: #006e59; border-color: #00b894; }
+    .mtag-l { background: #f0effe; color: #4a3abf; border-color: #a29bfe; }
+    .mtag-a { background: #fff0eb; color: #a84432; border-color: #e17055; }
 
     /* ── Journal ── */
     main { padding: 16px; max-width: 600px; margin: 0 auto; }
@@ -360,7 +490,35 @@
 </head>
 <body>
 
-<header>
+<!-- ══ AUTH OVERLAY ══ -->
+<div id="auth-overlay">
+  <div class="auth-card">
+    <div class="auth-logo">🍼</div>
+    <div class="auth-app-name">Tétées</div>
+    <div class="auth-app-sub">Suivi bébé</div>
+    <div id="auth-title">Connexion</div>
+    <div class="auth-error" id="auth-error"></div>
+    <input class="auth-input" type="email" id="auth-email" placeholder="Email" autocomplete="email">
+    <input class="auth-input" type="password" id="auth-password" placeholder="Mot de passe">
+    <button class="auth-btn-primary" id="auth-submit">Se connecter</button>
+    <div class="auth-divider">— ou —</div>
+    <button class="auth-btn-secondary" id="auth-google">
+      <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.08 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-3.59-13.46-8.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+      Continuer avec Google
+    </button>
+    <button class="auth-btn-secondary" id="auth-anonymous">👤 Continuer sans compte</button>
+    <div class="auth-toggle">
+      <span id="auth-toggle-text">Pas encore de compte ?</span>
+      <span class="auth-toggle-link" id="auth-toggle-link"> Créer un compte →</span>
+    </div>
+  </div>
+</div>
+
+<!-- ══ APP ══ -->
+<div id="app-content" style="display:none">
+
+<header style="position:relative">
+  <button id="btn-logout" title="Déconnexion"><span id="user-initial">?</span></button>
   <h1>🍼 Tétées</h1>
   <div class="stats-bar">
     <div class="chip">Aujourd'hui&nbsp;: <strong id="cnt">0</strong></div>
@@ -410,6 +568,14 @@
     <div class="chart-legend" id="chart-legend"></div>
     <div class="chart-scroll-wrap">
       <div id="chart-svg"></div>
+    </div>
+    <div class="page-title" style="margin-top:8px;margin-bottom:8px;font-size:.9rem">💧 Pipi &amp; Caca</div>
+    <div class="chart-legend">
+      <div class="legend-item"><div class="legend-dot" style="background:#FFD700;border:1px solid #DCA800"></div>Pipi</div>
+      <div class="legend-item"><div class="legend-dot" style="background:#a0522d"></div>Caca</div>
+    </div>
+    <div class="chart-scroll-wrap">
+      <div id="soin-chart-svg"></div>
     </div>
     <div id="day-cards"></div>
   </div>
@@ -523,21 +689,147 @@
   </div>
 </div>
 
+<!-- Croissance -->
+<div id="view-croissance" style="display:none">
+  <div class="croissance-page">
+    <div class="crois-tabs">
+      <button class="crois-tab-btn active" data-mode="poids">⚖️ Poids</button>
+      <button class="crois-tab-btn" data-mode="taille">📏 Taille</button>
+    </div>
+    <div class="crois-latest-card" id="crois-latest-card" style="display:none">
+      <div class="crois-latest-val" id="crois-latest-val">—</div>
+      <div class="crois-latest-date" id="crois-latest-date"></div>
+    </div>
+    <div class="chart-scroll-wrap" id="crois-chart-wrap" style="display:none;margin-bottom:14px"></div>
+    <div class="crois-add-form">
+      <div class="page-title" style="margin-bottom:12px;font-size:.9rem">➕ Ajouter une mesure</div>
+      <div class="crois-form-row" style="margin-bottom:8px">
+        <input class="crois-input" type="number" id="crois-input" placeholder="ex: 4.2" step="0.1" min="0">
+        <span class="crois-unit" id="crois-unit-display">kg</span>
+      </div>
+      <div class="crois-form-row">
+        <input class="crois-date-input" type="date" id="crois-date">
+        <button class="crois-save-btn" id="btn-crois-save">Enregistrer</button>
+      </div>
+    </div>
+    <div class="crois-list-card">
+      <div style="font-size:.85rem;font-weight:700;margin-bottom:8px">Historique</div>
+      <div id="crois-list"></div>
+    </div>
+  </div>
+</div>
+
+<!-- Infos -->
+<div id="view-infos" style="display:none">
+  <div class="infos-page">
+
+    <!-- 1. Tenues par température -->
+    <div class="info-guide">
+      <div class="info-guide-title">👕 Tenues par température</div>
+      <div class="temp-row"><div class="temp-range" style="background:#fff0eb;color:#a84432;border-left:4px solid #e17055"><div class="temp-deg">+25°C</div><div class="temp-season">Canicule</div></div><div class="temp-details"><div class="temp-int"><b>Int.</b> Body coton MC, voire juste couche</div><div class="temp-ext"><b>Ext.</b> Chapeau large, lunettes, vêtements amples légers</div></div></div>
+      <div class="temp-row"><div class="temp-range" style="background:#fff9e6;color:#7a5800;border-left:4px solid #e0ac00"><div class="temp-deg">20–25°C</div></div><div class="temp-details"><div class="temp-int"><b>Int.</b> Body MC + T-shirt léger + Short / Pantalon fin</div><div class="temp-ext"><b>Ext.</b> Chapeau, gilet fin à porter</div></div></div>
+      <div class="temp-row"><div class="temp-range" style="background:#e8faf4;color:#006e59;border-left:4px solid #00b894"><div class="temp-deg">15–19°C</div></div><div class="temp-details"><div class="temp-int"><b>Int.</b> Body MC + Pull léger + Pantalon</div><div class="temp-ext"><b>Ext.</b> Veste légère, chaussettes, chaussures, chapeau si soleil</div></div></div>
+      <div class="temp-row"><div class="temp-range" style="background:#e8f4fe;color:#1a5fa8;border-left:4px solid #74b9ff"><div class="temp-deg">12–15°C</div></div><div class="temp-details"><div class="temp-int"><b>Int.</b> Body ML + Pull + Pantalon</div><div class="temp-ext"><b>Ext.</b> Manteau mi-saison, bonnet léger, chaussettes chaudes</div></div></div>
+      <div class="temp-row"><div class="temp-range" style="background:#eee8fe;color:#4a3abf;border-left:4px solid #a29bfe"><div class="temp-deg">&lt;12°C</div><div class="temp-season">Hiver</div></div><div class="temp-details"><div class="temp-int"><b>Int.</b> Body ML + Sous-pull + Pull chaud + Pantalon épais</div><div class="temp-ext"><b>Ext.</b> Superposition — jamais de combi pilote en siège auto. Petite couverture / nid d'ange.</div></div></div>
+    </div>
+
+    <!-- 2. Doses lait en poudre -->
+    <div class="info-guide">
+      <div class="info-guide-title">🍼 Doses lait en poudre</div>
+      <table class="info-table">
+        <thead><tr><th>Âge</th><th>Eau (ml)</th><th>Mesurettes</th><th>Biberons/24h</th></tr></thead>
+        <tbody>
+          <tr><td>0–1 mois</td><td>90</td><td>× 3</td><td>× 6</td></tr>
+          <tr><td>1–2 mois</td><td>120</td><td>× 4</td><td>× 6</td></tr>
+          <tr><td>2–3 mois</td><td>150</td><td>× 5</td><td>× 5</td></tr>
+          <tr><td>3–4 mois</td><td>180</td><td>× 6</td><td>× 5</td></tr>
+          <tr><td>4–6 mois</td><td>210</td><td>× 7</td><td>× 4</td></tr>
+          <tr><td>6–10 mois</td><td>210</td><td>× 7</td><td>× 3</td></tr>
+          <tr><td>10–12 mois</td><td>240</td><td>× 8</td><td>× 2</td></tr>
+          <tr><td>+12 mois</td><td>240</td><td>× 8</td><td>× 2</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 3. Selles de bébé -->
+    <div class="info-guide">
+      <div class="info-guide-title">💩 Couleur des selles</div>
+      <div class="selles-grid">
+        <div class="selle-card"><div class="selle-dot" style="background:#1a1010"></div><div class="selle-label">Noires</div><div class="selle-desc">Méconium — normal les premiers jours</div></div>
+        <div class="selle-card"><div class="selle-dot" style="background:#7b3f00"></div><div class="selle-label">Marrons</div><div class="selle-desc">Normal</div></div>
+        <div class="selle-card"><div class="selle-dot" style="background:linear-gradient(135deg,#b8c400,#f5c518)"></div><div class="selle-label" style="color:#7a5800">Vertes–Jaunes</div><div class="selle-desc">Normal (allaitement ou diversification)</div></div>
+        <div class="selle-card selle-alert"><div class="selle-dot" style="background:#c0392b"></div><div class="selle-label">Rouges</div><div class="selle-desc">Sang possible — avis médical</div></div>
+        <div class="selle-card selle-alert"><div class="selle-dot" style="background:#1a1010;border:2px solid #e17055"></div><div class="selle-label">Noires (après J3)</div><div class="selle-desc">Contactez votre pédiatre</div></div>
+        <div class="selle-card selle-alert"><div class="selle-dot" style="background:#e0ddd8;border:1px solid #bbb"></div><div class="selle-label">Blanches</div><div class="selle-desc">Contactez votre pédiatre</div></div>
+      </div>
+      <div class="selle-texture-row">
+        <div class="selle-texture-card"><div class="selle-texture-icon">💧</div><div class="selle-texture-label">Diarrhée</div><div class="selle-texture-desc">Fluide et liquide</div></div>
+        <div class="selle-texture-card"><div class="selle-texture-icon">🟤</div><div class="selle-texture-label">Constipation</div><div class="selle-texture-desc">Boules sèches ou très grasses</div></div>
+        <div class="selle-texture-card"><div class="selle-texture-icon">🫘</div><div class="selle-texture-label">Normale</div><div class="selle-texture-desc">Souple, non collante</div></div>
+      </div>
+    </div>
+
+    <!-- 4. Siestes de bébé -->
+    <div class="info-guide">
+      <div class="info-guide-title">😴 Siestes de bébé</div>
+      <table class="info-table">
+        <thead><tr><th>Âge</th><th>Éveil</th><th>Sieste</th><th>Nb/jour</th></tr></thead>
+        <tbody>
+          <tr><td>1 mois</td><td>45–60 min</td><td>45 min–3h</td><td>3 à 5</td></tr>
+          <tr><td>2–3 mois</td><td>60 min</td><td>1–3h</td><td>3 à 4</td></tr>
+          <tr><td>3–6 mois</td><td>1h30–2h</td><td>1h30–2h30</td><td>3 à 4</td></tr>
+          <tr><td>6–9 mois</td><td>2–3h</td><td>45 min–2h</td><td>2 à 3</td></tr>
+          <tr><td>9–12 mois</td><td>3–4h</td><td>45 min–2h</td><td>2</td></tr>
+          <tr><td>1–2 ans</td><td>4–5h</td><td>1h30–2h30</td><td>1 à 2</td></tr>
+          <tr><td>2–4 ans</td><td>5–7h</td><td>1–2h</td><td>1</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- 5. Étapes de développement -->
+    <div class="info-guide">
+      <div class="info-guide-title">🌱 Développement 0–3 ans</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;font-size:.7rem">
+        <span class="mtag mtag-m">🔵 Motricité</span>
+        <span class="mtag mtag-s">🔴 Social</span>
+        <span class="mtag mtag-l">🟣 Langage</span>
+        <span class="mtag mtag-c">🟢 Cognitif</span>
+        <span class="mtag mtag-a">🟠 Alim.</span>
+      </div>
+      <div class="milestone-age">Naissance</div>
+      <div class="milestone-tags"><span class="mtag mtag-m">Éveil des sens</span><span class="mtag mtag-s">Réflexes innés</span><span class="mtag mtag-a">Allaitement / biberon</span><span class="mtag mtag-s">Vision ~20 cm</span></div>
+      <div class="milestone-age">1 mois</div>
+      <div class="milestone-tags"><span class="mtag mtag-m">Relève la tête brièvement</span><span class="mtag mtag-s">Premiers sourires</span><span class="mtag mtag-s">Échanges de regards</span><span class="mtag mtag-l">Gazouillis</span></div>
+      <div class="milestone-age">2–3 mois</div>
+      <div class="milestone-tags"><span class="mtag mtag-m">Tient la tête</span><span class="mtag mtag-s">Sourires sociaux</span><span class="mtag mtag-l">Babille</span><span class="mtag mtag-c">Suit un objet des yeux</span><span class="mtag mtag-m">Main à la bouche</span></div>
+      <div class="milestone-age">4 mois</div>
+      <div class="milestone-tags"><span class="mtag mtag-m">Se retourne ventre→dos</span><span class="mtag mtag-s">Rires, éclats</span><span class="mtag mtag-m">Mise en bouche</span><span class="mtag mtag-c">Ouverture de la main</span></div>
+      <div class="milestone-age">6 mois</div>
+      <div class="milestone-tags"><span class="mtag mtag-m">Assis avec soutien</span><span class="mtag mtag-m">Coordination bimanuelle</span><span class="mtag mtag-l">Gazouillis variés</span><span class="mtag mtag-a">Diversification alimentaire</span><span class="mtag mtag-m">Retournement dos→ventre</span></div>
+      <div class="milestone-age">9 mois</div>
+      <div class="milestone-tags"><span class="mtag mtag-m">4 pattes, rampe</span><span class="mtag mtag-l">Doubles syllabes (mama/papa)</span><span class="mtag mtag-s">Angoisse de séparation</span><span class="mtag mtag-m">Pince pouce-index</span><span class="mtag mtag-s">Coucou / Au revoir</span></div>
+      <div class="milestone-age">12 mois</div>
+      <div class="milestone-tags"><span class="mtag mtag-m">Premiers pas</span><span class="mtag mtag-l">1–2 mots</span><span class="mtag mtag-c">Permanence de l'objet</span><span class="mtag mtag-s">Jeux symboliques</span><span class="mtag mtag-a">Morceaux écrasés, cuillère</span></div>
+      <div class="milestone-age">18 mois</div>
+      <div class="milestone-tags"><span class="mtag mtag-l">~20 mots, pointe du doigt</span><span class="mtag mtag-s">Âge du NON</span><span class="mtag mtag-m">Court, monte escaliers</span><span class="mtag mtag-a">Sélectionne les aliments</span><span class="mtag mtag-m">Participe à l'habillage</span></div>
+      <div class="milestone-age">24 mois</div>
+      <div class="milestone-tags"><span class="mtag mtag-l">Association de 2 mots</span><span class="mtag mtag-c">Puzzle 2 pièces</span><span class="mtag mtag-s">Jeux parallèles</span><span class="mtag mtag-m">Saute à pieds joints</span><span class="mtag mtag-s">Régression du sommeil</span></div>
+      <div class="milestone-age">36 mois</div>
+      <div class="milestone-tags"><span class="mtag mtag-l">Vraies phrases, utilise «je»</span><span class="mtag mtag-s">Jeux avec d'autres enfants</span><span class="mtag mtag-m">Pédale, dessine</span><span class="mtag mtag-s">Affirmation de soi</span><span class="mtag mtag-c">Intègre les règles du jeu</span></div>
+    </div>
+
+  </div>
+</div>
+
 <button class="fab" id="fab">+</button>
 
 <nav class="bottom-nav">
-  <button class="nav-btn active" id="nav-journal">
-    <span class="nav-icon">🍼</span>Journal
-  </button>
-  <button class="nav-btn" id="nav-stats">
-    <span class="nav-icon">📊</span>Stats
-  </button>
-  <button class="nav-btn" id="nav-age">
-    <span class="nav-icon">👶</span>Âge
-  </button>
-  <button class="nav-btn" id="nav-soins">
-    <span class="nav-icon">🏥</span>Soins
-  </button>
+  <button class="nav-btn active" id="nav-journal"><span class="nav-icon">🍼</span>Journal</button>
+  <button class="nav-btn" id="nav-stats"><span class="nav-icon">📊</span>Stats</button>
+  <button class="nav-btn" id="nav-age"><span class="nav-icon">👶</span>Âge</button>
+  <button class="nav-btn" id="nav-soins"><span class="nav-icon">🏥</span>Soins</button>
+  <button class="nav-btn" id="nav-croissance"><span class="nav-icon">📏</span>Croissance</button>
+  <button class="nav-btn" id="nav-infos"><span class="nav-icon">📋</span>Infos</button>
 </nav>
 
 <!-- Modal -->
@@ -637,25 +929,14 @@
     biberon:     { label: 'Biberon',        emoji: '🍼', cls: 'icon-biberon'     },
   };
 
-  let entries    = [];
-  let selType    = 'sein_gauche';
-  let selBibType = 'maternel';
-  let editId     = null;
-  let statPeriod = 7;
-  let statMode   = 'count';
-  let birthDate  = new Date();
-  let babyGender = 'garcon';
-  let soins      = [];
-  let chronoRunning = false;
-  let chronoTime = 0;
-  let chronoInterval = null;
-  let chronoPaused = false;
+  let entries = [], soins = [], mesures = [];
+  let selType = 'sein_gauche', selBibType = 'maternel', editId = null;
+  let statPeriod = 7, statMode = 'count';
+  let birthDate = new Date(), babyGender = 'garcon';
+  let chronoRunning = false, chronoTime = 0, chronoInterval = null, chronoPaused = false;
   let bainReminderDays = 2;
-
-  // Multi-enfants
-  let children      = {};    // { childId: { name, gender, birthDate } }
-  let activeChildId = null;
-  let fcGender      = 'garcon';
+  let children = {}, activeChildId = null, fcGender = 'garcon', editChildId = null;
+  let currentUser = null, authMode = 'login', croisMode = 'poids', appInterval = null;
 
   /* ── Firebase ── */
   firebase.initializeApp({
@@ -667,18 +948,136 @@
     messagingSenderId: "602148113728",
     appId: "1:602148113728:web:b0b7b04ae2be0e820a7ea5"
   });
-
   const db = firebase.database();
 
-  function childEntriesRef() { return db.ref('children/' + activeChildId + '/entries'); }
-  function childSoinsRef()   { return db.ref('children/' + activeChildId + '/soins');   }
-  function childProfileRef() { return db.ref('children/' + activeChildId + '/profile'); }
+  /* ── Chemins Firebase (user-scoped) ── */
+  function ur() { return 'users/' + currentUser.uid; }
+  function childEntriesRef() { return db.ref(ur() + '/children/' + activeChildId + '/entries'); }
+  function childSoinsRef()   { return db.ref(ur() + '/children/' + activeChildId + '/soins'); }
+  function childProfileRef() { return db.ref(ur() + '/children/' + activeChildId + '/profile'); }
+  function childMesuresRef() { return db.ref(ur() + '/children/' + activeChildId + '/mesures'); }
 
-  db.ref('.info/connected').on('value', snap => {
-    const ok = !!snap.val();
-    document.getElementById('dot').className       = 'sync-dot' + (ok ? '' : ' off');
-    document.getElementById('sync-lbl').textContent = ok ? 'Synchronisé' : 'Hors ligne';
+  /* ── Auth ── */
+  function translateAuthError(code) {
+    return ({ 'auth/user-not-found':'Email inconnu.', 'auth/wrong-password':'Mot de passe incorrect.',
+      'auth/invalid-credential':'Email ou mot de passe incorrect.',
+      'auth/email-already-in-use':'Email déjà utilisé.', 'auth/weak-password':'6 caractères minimum.',
+      'auth/invalid-email':'Email invalide.', 'auth/too-many-requests':'Trop de tentatives.',
+      'auth/network-request-failed':'Erreur réseau.', 'auth/popup-closed-by-user':'' })[code] || 'Erreur. Réessayez.';
+  }
+  function updateAuthUI() {
+    const isL = authMode === 'login';
+    document.getElementById('auth-title').textContent = isL ? 'Connexion' : 'Créer un compte';
+    document.getElementById('auth-submit').textContent = isL ? 'Se connecter' : 'Créer mon compte';
+    document.getElementById('auth-toggle-text').textContent = isL ? 'Pas encore de compte ?' : 'Déjà inscrit ?';
+    document.getElementById('auth-toggle-link').textContent = isL ? ' Créer un compte →' : '← Se connecter';
+    document.getElementById('auth-error').textContent = '';
+  }
+  firebase.auth().getRedirectResult().catch(err => {
+    if (err.code) document.getElementById('auth-error').textContent = translateAuthError(err.code);
   });
+  firebase.auth().onAuthStateChanged(user => {
+    if (user) {
+      currentUser = user;
+      const ini = user.isAnonymous ? '👤' : (user.email ? user.email[0].toUpperCase() : '?');
+      document.getElementById('user-initial').textContent = ini;
+      document.getElementById('auth-overlay').style.display = 'none';
+      document.getElementById('app-content').style.display = 'block';
+      initApp();
+    } else {
+      if (currentUser) cleanupApp();
+      currentUser = null;
+      document.getElementById('auth-overlay').style.display = 'flex';
+      document.getElementById('app-content').style.display = 'none';
+    }
+  });
+  document.getElementById('auth-submit').addEventListener('click', () => {
+    const email = document.getElementById('auth-email').value.trim();
+    const pw    = document.getElementById('auth-password').value;
+    document.getElementById('auth-error').textContent = '';
+    if (!email || !pw) return;
+    const fn = authMode === 'login'
+      ? firebase.auth().signInWithEmailAndPassword(email, pw)
+      : firebase.auth().createUserWithEmailAndPassword(email, pw);
+    fn.catch(err => { document.getElementById('auth-error').textContent = translateAuthError(err.code); });
+  });
+  document.getElementById('auth-google').addEventListener('click', () => {
+    firebase.auth().signInWithRedirect(new firebase.auth.GoogleAuthProvider())
+      .catch(err => { document.getElementById('auth-error').textContent = translateAuthError(err.code); });
+  });
+  document.getElementById('auth-anonymous').addEventListener('click', () => {
+    firebase.auth().signInAnonymously()
+      .catch(err => { document.getElementById('auth-error').textContent = translateAuthError(err.code); });
+  });
+  document.getElementById('auth-toggle-link').addEventListener('click', () => {
+    authMode = authMode === 'login' ? 'register' : 'login';
+    updateAuthUI();
+  });
+  document.getElementById('btn-logout').addEventListener('click', () => {
+    if (!confirm('Se déconnecter ?')) return;
+    cleanupApp();
+    firebase.auth().signOut();
+  });
+
+  /* ── Init App ── */
+  function initApp() {
+    db.ref('.info/connected').on('value', snap => {
+      const ok = !!snap.val();
+      document.getElementById('dot').className = 'sync-dot' + (ok ? '' : ' off');
+      document.getElementById('sync-lbl').textContent = ok ? 'Synchronisé' : 'Hors ligne';
+    });
+    db.ref(ur() + '/children').once('value', snap => {
+      if (snap.val()) {
+        loadChildren(snap);
+      } else {
+        // Migration données legacy
+        db.ref('children').once('value', leg => {
+          if (leg.val()) {
+            db.ref(ur() + '/children').set(leg.val()).then(() =>
+              db.ref(ur() + '/children').once('value', s => loadChildren(s)));
+          } else {
+            loadChildren(null);
+          }
+        });
+      }
+    });
+    db.ref(ur() + '/children').on('value', snap => {
+      if (!snap.val()) return;
+      const upd = {};
+      Object.entries(snap.val()).forEach(([id, c]) => { if (c.profile) upd[id] = c.profile; });
+      children = upd;
+      renderChildSelector();
+    });
+    appInterval = setInterval(() => { updateHeader(); checkReminders(); }, 30000);
+  }
+
+  function loadChildren(snap) {
+    if (snap && snap.val()) {
+      Object.entries(snap.val()).forEach(([id, c]) => { if (c.profile) children[id] = c.profile; });
+      const savedId = localStorage.getItem('acid_' + currentUser.uid);
+      activeChildId = (savedId && children[savedId]) ? savedId : Object.keys(children)[0];
+      localStorage.setItem('acid_' + currentUser.uid, activeChildId);
+      renderChildSelector();
+      attachChildListeners();
+    } else {
+      renderChildSelector();
+      setTimeout(() => openChildModal(null), 400);
+    }
+  }
+
+  function cleanupApp() {
+    if (appInterval) { clearInterval(appInterval); appInterval = null; }
+    if (activeChildId && currentUser) {
+      db.ref(ur() + '/children/' + activeChildId + '/entries').off();
+      db.ref(ur() + '/children/' + activeChildId + '/soins').off();
+      db.ref(ur() + '/children/' + activeChildId + '/profile').off();
+      db.ref(ur() + '/children/' + activeChildId + '/mesures').off();
+      db.ref(ur() + '/children').off();
+      db.ref('.info/connected').off();
+    }
+    children = {}; activeChildId = null; entries = []; soins = []; mesures = [];
+    render(); renderChildSelector();
+  }
 
   /* ── Sélecteur d'enfants ── */
   function renderChildSelector() {
@@ -690,11 +1089,8 @@
     }).join('');
     pills.querySelectorAll('.child-pill').forEach(btn => {
       btn.addEventListener('click', () => {
-        if (btn.dataset.cid === activeChildId) {
-          openChildModal(btn.dataset.cid); // tap sur l'enfant actif → éditer
-        } else {
-          switchChild(btn.dataset.cid);
-        }
+        if (btn.dataset.cid === activeChildId) openChildModal(btn.dataset.cid);
+        else switchChild(btn.dataset.cid);
       });
     });
   }
@@ -704,13 +1100,11 @@
       const data = snap.val() || {};
       entries = Object.entries(data).map(([id, v]) => ({ id, ...v }));
       entries.sort((a, b) => new Date(b.datetime) - new Date(a.datetime));
-      render();
-      renderStats();
+      render(); renderStats();
     });
     childSoinsRef().on('value', snap => {
       soins = Object.entries(snap.val() || {}).map(([id, v]) => ({ id, ...v }));
-      renderSoins();
-      checkReminders();
+      renderSoins(); checkReminders();
     });
     childProfileRef().on('value', snap => {
       const p = snap.val() || {};
@@ -721,71 +1115,28 @@
       babyGender = p.gender || 'garcon';
       bainReminderDays = (p.bainReminderDays !== undefined) ? p.bainReminderDays : 2;
       document.getElementById('bain-reminder-count').textContent = bainReminderDays;
-      renderAge();
-      checkReminders();
+      renderAge(); checkReminders();
+    });
+    childMesuresRef().on('value', snap => {
+      mesures = Object.entries(snap.val() || {}).map(([id, v]) => ({ id, ...v }));
+      renderCroissance();
     });
   }
 
   function switchChild(id) {
-    if (activeChildId) {
-      db.ref('children/' + activeChildId + '/entries').off();
-      db.ref('children/' + activeChildId + '/soins').off();
-      db.ref('children/' + activeChildId + '/profile').off();
+    if (activeChildId && currentUser) {
+      db.ref(ur() + '/children/' + activeChildId + '/entries').off();
+      db.ref(ur() + '/children/' + activeChildId + '/soins').off();
+      db.ref(ur() + '/children/' + activeChildId + '/profile').off();
+      db.ref(ur() + '/children/' + activeChildId + '/mesures').off();
     }
     activeChildId = id;
-    localStorage.setItem('activeChildId', id);
-    entries = []; soins = [];
-    render(); renderStats(); renderSoins();
+    localStorage.setItem('acid_' + currentUser.uid, id);
+    entries = []; soins = []; mesures = [];
+    render(); renderStats(); renderSoins(); renderCroissance();
     renderChildSelector();
     attachChildListeners();
   }
-
-  // Mise à jour du sélecteur quand un enfant est ajouté/modifié
-  db.ref('children').on('value', snap => {
-    if (!snap.val()) return;
-    const updated = {};
-    Object.entries(snap.val()).forEach(([id, c]) => { if (c.profile) updated[id] = c.profile; });
-    children = updated;
-    renderChildSelector();
-  });
-
-  // Initialisation : migration ou chargement
-  db.ref('children').once('value', snap => {
-    if (snap.val()) {
-      Object.entries(snap.val()).forEach(([id, c]) => { if (c.profile) children[id] = c.profile; });
-      const savedId = localStorage.getItem('activeChildId');
-      activeChildId = (savedId && children[savedId]) ? savedId : Object.keys(children)[0];
-      localStorage.setItem('activeChildId', activeChildId);
-      renderChildSelector();
-      attachChildListeners();
-    } else {
-      // Premier lancement : migrer les données existantes (entries/soins/settings)
-      Promise.all([
-        db.ref('settings').once('value'),
-        db.ref('entries').once('value'),
-        db.ref('soins').once('value'),
-      ]).then(([sSnap, eSnap, soSnap]) => {
-        const s = sSnap.val() || {};
-        const profile = {
-          name:      'Bébé',
-          gender:    s.gender    || 'garcon',
-          birthDate: s.birthDate || new Date().toISOString().split('T')[0],
-        };
-        const newRef  = db.ref('children').push({ profile });
-        const childId = newRef.key;
-        const tasks   = [];
-        if (eSnap.val())  tasks.push(db.ref('children/' + childId + '/entries').set(eSnap.val()));
-        if (soSnap.val()) tasks.push(db.ref('children/' + childId + '/soins').set(soSnap.val()));
-        Promise.all(tasks).then(() => {
-          children[childId] = profile;
-          activeChildId = childId;
-          localStorage.setItem('activeChildId', childId);
-          renderChildSelector();
-          attachChildListeners();
-        });
-      });
-    }
-  });
 
   /* ── Helpers ── */
   function pad(n) { return String(n).padStart(2, '0'); }
@@ -967,6 +1318,93 @@
     </svg>`;
   }
 
+  function buildSoinSVGChart(dayStats) {
+    const BAR_W = statPeriod <= 7 ? 28 : 16, GAP = statPeriod <= 7 ? 8 : 4;
+    const CHART_H = 90, TOTAL_H = 130, LABEL_H = 26, PAD_L = 28, PAD_R = 8;
+    const n = dayStats.length;
+    const W = PAD_L + n * (BAR_W + GAP) - GAP + PAD_R;
+    const baseY = TOTAL_H - LABEL_H;
+    const maxVal = Math.max(...dayStats.map(d => d.pipi + d.caca), 1);
+    let bars = '', xlabels = '', grid = '';
+    const steps = Math.min(maxVal, 4);
+    for (let s = 1; s <= steps; s++) {
+      const frac = s / steps, y = (baseY - frac * CHART_H).toFixed(1);
+      grid += `<line x1="${PAD_L-4}" y1="${y}" x2="${W-PAD_R}" y2="${y}" stroke="#dfe6e9" stroke-width="0.7" stroke-dasharray="3,3"/>`;
+      grid += `<text x="${PAD_L-6}" y="${(+y+3).toFixed(1)}" text-anchor="end" font-size="8" fill="#b2bec3">${Math.round(frac*maxVal)}</text>`;
+    }
+    dayStats.forEach((d, i) => {
+      const x = PAD_L + i * (BAR_W + GAP);
+      let y = baseY;
+      [{val:d.caca,color:'#a0522d'},{val:d.pipi,color:'#FFD700'}].forEach(seg => {
+        if (seg.val > 0) {
+          const h = Math.max((seg.val / maxVal) * CHART_H, 2);
+          y -= h;
+          bars += `<rect x="${x}" y="${y.toFixed(1)}" width="${BAR_W}" height="${h.toFixed(1)}" fill="${seg.color}" rx="2"/>`;
+        }
+      });
+      xlabels += `<text x="${(x+BAR_W/2).toFixed(1)}" y="${TOTAL_H-7}" text-anchor="middle" font-size="${statPeriod<=7?10:8}" fill="#636e72">${chartLabel(d.key)}</text>`;
+    });
+    return `<svg width="${W}" height="${TOTAL_H}" xmlns="http://www.w3.org/2000/svg">
+      <line x1="${PAD_L-4}" y1="${baseY-CHART_H}" x2="${PAD_L-4}" y2="${baseY}" stroke="#dfe6e9" stroke-width="1"/>
+      ${grid}${bars}${xlabels}</svg>`;
+  }
+
+  function buildLineChart(data, unit) {
+    const W = 340, H = 130, PL = 48, PR = 10, PT = 10, PB = 24;
+    const plotW = W-PL-PR, plotH = H-PT-PB;
+    const values = data.map(d => +d.value);
+    const ts = data.map(d => new Date(d.date+'T12:00:00').getTime());
+    const minV = Math.min(...values), maxV = Math.max(...values);
+    const minT = ts[0], maxT = ts[ts.length-1];
+    const vR = (maxV-minV)||1, tR = (maxT-minT)||1;
+    const xOf = t => PL + ((t-minT)/tR)*plotW;
+    const yOf = v => PT + (1-(v-minV)/vR)*plotH;
+    const pts = data.map(d => [xOf(new Date(d.date+'T12:00:00').getTime()), yOf(+d.value)]);
+    const lp = pts.map((p,i) => `${i===0?'M':'L'}${p[0].toFixed(1)},${p[1].toFixed(1)}`).join(' ');
+    const ap = lp + ` L${pts[pts.length-1][0].toFixed(1)},${(PT+plotH).toFixed(1)} L${PL},${(PT+plotH).toFixed(1)} Z`;
+    const dots = pts.map(p=>`<circle cx="${p[0].toFixed(1)}" cy="${p[1].toFixed(1)}" r="3.5" fill="#6c5ce7" stroke="#fff" stroke-width="1.5"/>`).join('');
+    const fd = t => { const d=new Date(t); return `${d.getDate()}/${d.getMonth()+1}`; };
+    return `<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg" style="max-width:100%;display:block">
+      <defs><linearGradient id="lg1" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#6c5ce7" stop-opacity="0.15"/><stop offset="100%" stop-color="#6c5ce7" stop-opacity="0"/></linearGradient></defs>
+      <path d="${ap}" fill="url(#lg1)"/>
+      <path d="${lp}" fill="none" stroke="#6c5ce7" stroke-width="2.5" stroke-linejoin="round" stroke-linecap="round"/>
+      ${dots}
+      <text x="${PL-4}" y="${PT+4}" text-anchor="end" font-size="9" fill="#b2bec3">${maxV}${unit}</text>
+      <text x="${PL-4}" y="${PT+plotH}" text-anchor="end" font-size="9" fill="#b2bec3">${minV}${unit}</text>
+      <text x="${PL}" y="${H-4}" text-anchor="middle" font-size="9" fill="#b2bec3">${fd(minT)}</text>
+      <text x="${W-PR}" y="${H-4}" text-anchor="end" font-size="9" fill="#b2bec3">${fd(maxT)}</text>
+    </svg>`;
+  }
+
+  function renderCroissance() {
+    if (document.getElementById('view-croissance').style.display === 'none') return;
+    const unit = croisMode === 'poids' ? 'kg' : 'cm';
+    document.getElementById('crois-input').placeholder = croisMode === 'poids' ? 'ex: 4.2' : 'ex: 55';
+    document.getElementById('crois-unit-display').textContent = unit;
+    const dateEl = document.getElementById('crois-date');
+    if (!dateEl.value) dateEl.value = new Date().toISOString().split('T')[0];
+    const filtered = mesures.filter(m => m.type === croisMode).sort((a,b) => new Date(a.date)-new Date(b.date));
+    const latestCard = document.getElementById('crois-latest-card');
+    if (filtered.length > 0) {
+      const lat = filtered[filtered.length-1];
+      document.getElementById('crois-latest-val').textContent = lat.value + ' ' + unit;
+      document.getElementById('crois-latest-date').textContent = new Date(lat.date+'T12:00:00').toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'});
+      latestCard.style.display = 'block';
+    } else { latestCard.style.display = 'none'; }
+    const chartWrap = document.getElementById('crois-chart-wrap');
+    if (filtered.length >= 2) { chartWrap.innerHTML = buildLineChart(filtered, unit); chartWrap.style.display = 'block'; }
+    else { chartWrap.style.display = 'none'; }
+    const listHtml = [...filtered].reverse().map(m => `<div class="crois-entry">
+      <div><div class="crois-entry-val">${m.value} ${unit}</div>
+      <div class="crois-entry-date">${new Date(m.date+'T12:00:00').toLocaleDateString('fr-FR',{day:'numeric',month:'long'})}</div></div>
+      <span class="crois-entry-del" data-mid="${m.id}">✕</span></div>`).join('');
+    const list = document.getElementById('crois-list');
+    list.innerHTML = listHtml || '<p style="text-align:center;color:var(--muted);padding:14px 0">Aucune mesure</p>';
+    list.querySelectorAll('.crois-entry-del').forEach(btn => {
+      btn.addEventListener('click', () => childMesuresRef().child(btn.dataset.mid).remove());
+    });
+  }
+
   function applyAgeTheme(gender) {
     const ids = ['baby-display-card', 'baby-face-circle', 'age-days', 'age-milestone'];
     ids.forEach(id => {
@@ -1123,6 +1561,12 @@
       .map(([c, l]) => `<div class="legend-item"><div class="legend-dot" style="background:${c}"></div>${l}</div>`)
       .join('');
 
+    const soinDayStats = getDayRange(statPeriod).map(k => {
+      const day = soins.filter(s => dateKey(s.datetime) === k);
+      return { key: k, pipi: day.filter(s => s.type === 'pipi').length, caca: day.filter(s => s.type === 'caca').length };
+    });
+    document.getElementById('soin-chart-svg').innerHTML = buildSoinSVGChart(soinDayStats);
+
     const withData = [...dayStats].reverse().filter(d => d.total > 0);
     document.getElementById('day-cards').innerHTML = withData.length
       ? withData.map(d => {
@@ -1158,28 +1602,23 @@
 
   /* ── Navigation ── */
   function showTab(tab) {
-    const isJournal = tab === 'journal';
-    const isStats = tab === 'stats';
-    const isAge = tab === 'age';
-    const isSoins = tab === 'soins';
-    document.getElementById('view-journal').style.display = isJournal ? 'block' : 'none';
-    document.getElementById('view-stats').style.display   = isStats ? 'block' : 'none';
-    document.getElementById('view-age').style.display     = isAge ? 'block' : 'none';
-    document.getElementById('view-soins').style.display   = isSoins ? 'block' : 'none';
-    document.getElementById('fab').style.display          = isJournal ? 'flex'  : 'none';
-    document.getElementById('nav-journal').classList.toggle('active', isJournal);
-    document.getElementById('nav-stats').classList.toggle('active', isStats);
-    document.getElementById('nav-age').classList.toggle('active', isAge);
-    document.getElementById('nav-soins').classList.toggle('active', isSoins);
-    if (isStats) renderStats();
-    if (isAge) renderAge();
-    if (isSoins) renderSoins();
+    ['journal','stats','age','soins','croissance','infos'].forEach(t => {
+      document.getElementById('view-' + t).style.display = t === tab ? 'block' : 'none';
+      document.getElementById('nav-' + t).classList.toggle('active', t === tab);
+    });
+    document.getElementById('fab').style.display = tab === 'journal' ? 'flex' : 'none';
+    if (tab === 'stats') renderStats();
+    if (tab === 'age') renderAge();
+    if (tab === 'soins') renderSoins();
+    if (tab === 'croissance') renderCroissance();
   }
 
-  document.getElementById('nav-journal').addEventListener('click', () => showTab('journal'));
-  document.getElementById('nav-stats').addEventListener('click',   () => showTab('stats'));
-  document.getElementById('nav-age').addEventListener('click',     () => showTab('age'));
-  document.getElementById('nav-soins').addEventListener('click',   () => showTab('soins'));
+  document.getElementById('nav-journal').addEventListener('click',    () => showTab('journal'));
+  document.getElementById('nav-stats').addEventListener('click',      () => showTab('stats'));
+  document.getElementById('nav-age').addEventListener('click',        () => showTab('age'));
+  document.getElementById('nav-soins').addEventListener('click',      () => showTab('soins'));
+  document.getElementById('nav-croissance').addEventListener('click', () => showTab('croissance'));
+  document.getElementById('nav-infos').addEventListener('click',      () => showTab('infos'));
 
   // Boutons + et − pour pipi / caca
   document.querySelectorAll('.soin-plus').forEach(btn => {
@@ -1296,7 +1735,7 @@
     const profile = { name, gender: fcGender, birthDate: birth };
 
     if (editChildId) {
-      db.ref('children/' + editChildId + '/profile').update(profile);
+      db.ref(ur() + '/children/' + editChildId + '/profile').update(profile);
       children[editChildId] = profile;
       // Si c'est l'enfant actif, rafraîchir age/soins
       if (editChildId === activeChildId) {
@@ -1308,7 +1747,7 @@
       renderChildSelector();
       closeChildModal();
     } else {
-      const newRef = db.ref('children').push({ profile });
+      const newRef = db.ref(ur() + '/children').push({ profile });
       closeChildModal();
       setTimeout(() => switchChild(newRef.key), 200);
     }
@@ -1329,7 +1768,7 @@
     const otherId = Object.keys(children).find(id => id !== idToDelete);
     switchChild(otherId);
 
-    db.ref('children/' + idToDelete).remove();
+    db.ref(ur() + '/children/' + idToDelete).remove();
     delete children[idToDelete];
     renderChildSelector();
   });
@@ -1544,9 +1983,25 @@
   document.getElementById('reminder-vit-cta').addEventListener('click',  () => showTab('soins'));
   document.getElementById('reminder-bain-cta').addEventListener('click', () => showTab('soins'));
 
-  document.addEventListener('visibilitychange', () => { if (!document.hidden) checkReminders(); });
+  document.querySelectorAll('.crois-tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      croisMode = btn.dataset.mode;
+      document.querySelectorAll('.crois-tab-btn').forEach(b => b.classList.toggle('active', b === btn));
+      renderCroissance();
+    });
+  });
 
-  setInterval(() => { updateHeader(); checkReminders(); }, 30000);
+  document.getElementById('btn-crois-save').addEventListener('click', () => {
+    const val  = document.getElementById('crois-input').value.trim();
+    const date = document.getElementById('crois-date').value;
+    if (!val || !date || isNaN(+val) || +val <= 0) return;
+    childMesuresRef().push({ type: croisMode, value: +val, date });
+    document.getElementById('crois-input').value = '';
+  });
+
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) checkReminders(); });
 </script>
+
+</div><!-- /app-content -->
 </body>
 </html>
