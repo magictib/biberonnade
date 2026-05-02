@@ -122,6 +122,22 @@
       color: #fff; font-size: .85rem; font-weight: 800; cursor: pointer;
       display: flex; align-items: center; justify-content: center; font-family: inherit;
     }
+    #btn-coparent {
+      position: absolute; top: 14px; left: 14px;
+      width: 34px; height: 34px; border-radius: 50%;
+      background: rgba(255,255,255,.2); border: 1.5px solid rgba(255,255,255,.4);
+      color: #fff; font-size: 1.1rem; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .cp-section-title {
+      font-size: .78rem; font-weight: 700; color: var(--muted);
+      text-transform: uppercase; letter-spacing: .4px; margin-bottom: 8px;
+    }
+    .cp-linked-row {
+      display: flex; align-items: center; gap: 10px;
+      padding: 10px 12px; background: #e6faf5; border-radius: 12px;
+      margin-bottom: 8px; font-size: .88rem; font-weight: 600; color: #006e59;
+    }
 
     /* ── Croissance ── */
     .croissance-page { padding: 16px; max-width: 600px; margin: 0 auto; }
@@ -536,6 +552,7 @@
 <div id="app-content" style="display:none">
 
 <header style="position:relative">
+  <button id="btn-coparent" title="Co-parent">👫</button>
   <button id="btn-logout" title="Déconnexion"><span id="user-initial">?</span></button>
   <h1>🍼 Tétées</h1>
   <div class="stats-bar">
@@ -911,69 +928,61 @@
   </div>
 </div>
 
-<!-- Modal ajout enfant -->
+<!-- Modal ajout / édition enfant -->
 <div class="overlay" id="overlay-child">
   <div class="sheet">
     <div class="handle"></div>
     <h2 id="fc-title">Ajouter un enfant</h2>
-
-    <!-- Tabs (ajout uniquement) -->
-    <div id="fc-tabs" style="display:none">
-      <div style="display:flex;gap:8px;margin-bottom:18px">
-        <button type="button" class="crois-tab-btn active" id="fc-tab-new">👶 Nouveau bébé</button>
-        <button type="button" class="crois-tab-btn" id="fc-tab-join">👫 Rejoindre</button>
+    <div class="fg">
+      <label class="lbl" for="fc-name">Prénom</label>
+      <input type="text" id="fc-name" placeholder="ex : Léonie" autocomplete="off">
+    </div>
+    <div class="fg">
+      <div class="lbl">Sexe</div>
+      <div class="type-grid">
+        <button type="button" class="type-btn fc-gender-btn active-garcon" data-gender="garcon"><span>💙</span>Garçon</button>
+        <button type="button" class="type-btn fc-gender-btn" data-gender="fille"><span>💗</span>Fille</button>
       </div>
     </div>
-
-    <!-- Formulaire bébé (ajout + édition) -->
-    <div id="fc-form-section">
-      <div class="fg">
-        <label class="lbl" for="fc-name">Prénom</label>
-        <input type="text" id="fc-name" placeholder="ex : Léonie" autocomplete="off">
-      </div>
-      <div class="fg">
-        <div class="lbl">Sexe</div>
-        <div class="type-grid">
-          <button type="button" class="type-btn fc-gender-btn active-garcon" data-gender="garcon"><span>💙</span>Garçon</button>
-          <button type="button" class="type-btn fc-gender-btn" data-gender="fille"><span>💗</span>Fille</button>
-        </div>
-      </div>
-      <div class="fg">
-        <label class="lbl" for="fc-birth">Date de naissance</label>
-        <input type="date" id="fc-birth">
-      </div>
-      <div class="btn-row">
-        <button type="button" class="btn btn-cancel" id="fc-cancel">Annuler</button>
-        <button type="button" class="btn btn-primary" id="fc-save">Ajouter</button>
-      </div>
-      <button type="button" class="btn btn-delete" id="fc-delete" style="display:none;width:100%;margin-top:10px;">Supprimer ce bébé</button>
+    <div class="fg">
+      <label class="lbl" for="fc-birth">Date de naissance</label>
+      <input type="date" id="fc-birth">
     </div>
-
-    <!-- Inviter co-parent (édition uniquement) -->
-    <div id="fc-invite-section" style="display:none">
-      <div style="border-top:1px solid var(--border);margin:16px 0 14px"></div>
-      <div style="font-size:.82rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px">👫 Inviter un co-parent</div>
-      <p style="font-size:.8rem;color:var(--muted);margin-bottom:12px;line-height:1.5">Partagez un code avec le co-parent. Il pourra consulter les données de ce bébé.</p>
-      <div id="fc-invite-box" class="invite-code-box" style="display:none">
-        <div class="invite-code-digits" id="fc-invite-digits">——————</div>
-        <div class="invite-code-hint">Valable 24h — à partager avec le co-parent</div>
-      </div>
-      <button type="button" class="btn btn-primary" id="fc-gen-invite">Générer un code d'invitation</button>
+    <div class="btn-row">
+      <button type="button" class="btn btn-cancel" id="fc-cancel">Annuler</button>
+      <button type="button" class="btn btn-primary" id="fc-save">Ajouter</button>
     </div>
+    <button type="button" class="btn btn-delete" id="fc-delete" style="display:none;width:100%;margin-top:10px;">Supprimer ce bébé</button>
+  </div>
+</div>
 
-    <!-- Rejoindre via code (ajout, onglet Rejoindre) -->
-    <div id="fc-join-section" style="display:none">
-      <div class="fg">
-        <label class="lbl">Code d'invitation reçu</label>
-        <input class="join-code-input" type="text" id="fc-join-code" placeholder="ABC123" maxlength="6" autocomplete="off">
-      </div>
-      <div id="fc-join-error" style="display:none;color:#c0392b;font-size:.82rem;text-align:center;margin-bottom:8px;padding:8px;background:#fff0f0;border-radius:8px;border:1px solid #e17055"></div>
-      <div class="btn-row">
-        <button type="button" class="btn btn-cancel" id="fc-join-cancel">Annuler</button>
-        <button type="button" class="btn btn-primary" id="fc-join-btn">Rejoindre 👫</button>
-      </div>
+<!-- Modal co-parent -->
+<div class="overlay" id="overlay-coparent">
+  <div class="sheet">
+    <div class="handle"></div>
+    <h2>👫 Co-parent</h2>
+
+    <!-- Liens actifs -->
+    <div id="cp-linked-list" style="margin-bottom:16px;display:none"></div>
+
+    <!-- Inviter -->
+    <div class="cp-section-title">Inviter mon co-parent</div>
+    <p style="font-size:.8rem;color:var(--muted);margin-bottom:12px;line-height:1.5">Générez un code et partagez-le avec votre co-parent. Il accédera à tous vos bébés et les données seront synchronisées en temps réel.</p>
+    <div id="cp-invite-box" class="invite-code-box" style="display:none">
+      <div class="invite-code-digits" id="cp-invite-digits">——————</div>
+      <div class="invite-code-hint">Valable 24h — partagez ce code avec votre co-parent</div>
     </div>
+    <button type="button" class="btn btn-primary" id="cp-gen-invite" style="margin-bottom:24px">Générer un code d'invitation</button>
 
+    <div style="border-top:1px solid var(--border);margin-bottom:20px"></div>
+
+    <!-- Rejoindre -->
+    <div class="cp-section-title">Rejoindre avec un code</div>
+    <p style="font-size:.8rem;color:var(--muted);margin-bottom:12px;line-height:1.5">Entrez le code reçu de votre co-parent pour accéder à ses bébés.</p>
+    <input class="join-code-input" type="text" id="cp-join-code" placeholder="ABC123" maxlength="6" autocomplete="off" style="margin-bottom:10px">
+    <div id="cp-join-error" style="display:none;color:#c0392b;font-size:.82rem;text-align:center;margin-bottom:8px;padding:8px;background:#fff0f0;border-radius:8px;border:1px solid #e17055"></div>
+    <button type="button" class="btn btn-primary" id="cp-join-btn" style="margin-bottom:10px">Rejoindre 👫</button>
+    <button type="button" class="btn btn-cancel" id="cp-close" style="width:100%">Fermer</button>
   </div>
 </div>
 
@@ -993,7 +1002,7 @@
   let bainReminderDays = 2;
   let children = {}, activeChildId = null, fcGender = 'garcon', editChildId = null;
   let currentUser = null, authMode = 'login', croisMode = 'poids', appInterval = null;
-  let activeOwnerUid = null, sharedChildren = {};
+  let activeOwnerUid = null, sharedChildren = {}, linkedChildrenListeners = {};
 
   /* ── Firebase ── */
   firebase.initializeApp({
@@ -1110,20 +1119,8 @@
       document.getElementById('dot').className = 'sync-dot' + (ok ? '' : ' off');
       document.getElementById('sync-lbl').textContent = ok ? 'Synchronisé' : 'Hors ligne';
     });
-    db.ref(ur() + '/children').once('value', snap => {
-      if (snap.val()) {
-        loadChildren(snap);
-      } else {
-        // Migration données legacy
-        db.ref('children').once('value', leg => {
-          if (leg.val()) {
-            db.ref(ur() + '/children').set(leg.val()).then(() =>
-              db.ref(ur() + '/children').once('value', s => loadChildren(s)));
-          } else {
-            loadChildren(null);
-          }
-        });
-      }
+    db.ref('users/' + currentUser.uid + '/children').once('value', snap => {
+      loadChildren(snap.val() ? snap : null);
     });
     db.ref('users/' + currentUser.uid + '/children').on('value', snap => {
       if (!snap.val()) return;
@@ -1136,19 +1133,33 @@
     db.ref('users/' + currentUser.uid + '/linkedTo').on('value', snap => {
       const links = snap.val() || {};
       const ownerUids = Object.keys(links).filter(k => links[k]);
-      sharedChildren = {};
-      if (ownerUids.length === 0) { renderChildSelector(); return; }
-      let pending = ownerUids.length;
+      // Détacher listeners pour propriétaires supprimés
+      Object.keys(linkedChildrenListeners).forEach(uid => {
+        if (!ownerUids.includes(uid)) {
+          linkedChildrenListeners[uid].off();
+          delete linkedChildrenListeners[uid];
+          Object.keys(sharedChildren).forEach(cid => {
+            if (sharedChildren[cid]._ownerUid === uid) delete sharedChildren[cid];
+          });
+        }
+      });
+      // Attacher listeners temps-réel pour nouveaux propriétaires
       ownerUids.forEach(ownerUid => {
-        db.ref('users/' + ownerUid + '/children').once('value', childSnap => {
+        if (linkedChildrenListeners[ownerUid]) return;
+        const ref = db.ref('users/' + ownerUid + '/children');
+        linkedChildrenListeners[ownerUid] = ref;
+        ref.on('value', childSnap => {
           const data = childSnap.val() || {};
+          Object.keys(sharedChildren).forEach(cid => {
+            if (sharedChildren[cid]._ownerUid === ownerUid) delete sharedChildren[cid];
+          });
           Object.entries(data).forEach(([cid, c]) => {
             if (c.profile) sharedChildren[cid] = { ...c.profile, _ownerUid: ownerUid };
           });
-          pending--;
-          if (pending === 0) renderChildSelector();
+          renderChildSelector();
         });
       });
+      if (ownerUids.length === 0) renderChildSelector();
     });
 
     appInterval = setInterval(() => { updateHeader(); checkReminders(); }, 30000);
@@ -1174,6 +1185,8 @@
       db.ref('users/' + currentUser.uid + '/children').off();
       db.ref('users/' + currentUser.uid + '/linkedTo').off();
       db.ref('.info/connected').off();
+      Object.values(linkedChildrenListeners).forEach(ref => ref.off());
+      linkedChildrenListeners = {};
     }
     if (activeChildId && currentUser) {
       const ownerPath = 'users/' + (activeOwnerUid || currentUser.uid);
@@ -1806,42 +1819,22 @@
     });
   }
 
-  function showFcTab(tab) {
-    document.getElementById('fc-form-section').style.display = (tab === 'form' || tab === 'new') ? 'block' : 'none';
-    document.getElementById('fc-join-section').style.display = tab === 'join' ? 'block' : 'none';
-    if (!editChildId) {
-      document.getElementById('fc-tab-new').classList.toggle('active', tab !== 'join');
-      document.getElementById('fc-tab-join').classList.toggle('active', tab === 'join');
-    }
-  }
-
   function openChildModal(childId) {
     editChildId = childId || null;
     const isEdit = !!editChildId;
-
     document.getElementById('fc-title').textContent    = isEdit ? 'Modifier le bébé' : 'Ajouter un enfant';
     document.getElementById('fc-save').textContent     = isEdit ? 'Enregistrer'       : 'Ajouter';
     document.getElementById('fc-delete').style.display = isEdit ? 'block' : 'none';
-    document.getElementById('fc-tabs').style.display   = isEdit ? 'none' : 'block';
-    document.getElementById('fc-invite-section').style.display = isEdit ? 'block' : 'none';
-    document.getElementById('fc-invite-box').style.display = 'none';
-    document.getElementById('fc-gen-invite').textContent = 'Générer un code d\'invitation';
-
     if (isEdit) {
       const c = children[editChildId] || {};
       fcGender = c.gender || 'garcon';
       document.getElementById('fc-name').value  = c.name      || '';
       document.getElementById('fc-birth').value = c.birthDate || '';
-      showFcTab('form');
     } else {
       fcGender = 'garcon';
       document.getElementById('fc-name').value  = '';
       document.getElementById('fc-birth').value = '';
-      document.getElementById('fc-join-code').value = '';
-      document.getElementById('fc-join-error').style.display = 'none';
-      showFcTab('new');
     }
-
     updateFcGenderBtns();
     document.getElementById('overlay-child').classList.add('open');
   }
@@ -1852,50 +1845,71 @@
 
   document.getElementById('btn-add-child').addEventListener('click', () => openChildModal(null));
   document.getElementById('fc-cancel').addEventListener('click', closeChildModal);
-  document.getElementById('fc-join-cancel').addEventListener('click', closeChildModal);
   document.getElementById('overlay-child').addEventListener('click', e => {
     if (e.target === document.getElementById('overlay-child')) closeChildModal();
   });
 
-  document.getElementById('fc-tab-new').addEventListener('click', () => showFcTab('new'));
-  document.getElementById('fc-tab-join').addEventListener('click', () => showFcTab('join'));
+  // ── Modal co-parent ──
+  function openCoparentModal() {
+    document.getElementById('cp-invite-box').style.display = 'none';
+    document.getElementById('cp-gen-invite').textContent = 'Générer un code d\'invitation';
+    document.getElementById('cp-join-code').value = '';
+    document.getElementById('cp-join-error').style.display = 'none';
+    // Afficher les liens actifs
+    const ownerUids = Object.keys(linkedChildrenListeners);
+    const listEl = document.getElementById('cp-linked-list');
+    if (ownerUids.length > 0) {
+      listEl.style.display = 'block';
+      listEl.innerHTML = '<div class="cp-section-title" style="margin-bottom:8px">Liens actifs</div>' +
+        ownerUids.map(uid => {
+          const names = Object.values(sharedChildren)
+            .filter(c => c._ownerUid === uid)
+            .map(c => c.name).join(', ');
+          return `<div class="cp-linked-row">✓ Co-parent lié${names ? ' — ' + names : ''}</div>`;
+        }).join('');
+    } else {
+      listEl.style.display = 'none';
+    }
+    document.getElementById('overlay-coparent').classList.add('open');
+  }
 
-  document.getElementById('fc-gen-invite').addEventListener('click', () => {
+  function closeCoparentModal() {
+    document.getElementById('overlay-coparent').classList.remove('open');
+  }
+
+  document.getElementById('btn-coparent').addEventListener('click', openCoparentModal);
+  document.getElementById('cp-close').addEventListener('click', closeCoparentModal);
+  document.getElementById('overlay-coparent').addEventListener('click', e => {
+    if (e.target === document.getElementById('overlay-coparent')) closeCoparentModal();
+  });
+
+  document.getElementById('cp-gen-invite').addEventListener('click', () => {
     const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
     let code = '';
     for (let i = 0; i < 6; i++) code += chars[Math.floor(Math.random() * chars.length)];
     db.ref('invites/' + code).set({ ownerUid: currentUser.uid, expires: Date.now() + 86400000 });
-    document.getElementById('fc-invite-digits').textContent = code;
-    document.getElementById('fc-invite-box').style.display = 'block';
-    document.getElementById('fc-gen-invite').textContent = 'Nouveau code';
+    document.getElementById('cp-invite-digits').textContent = code;
+    document.getElementById('cp-invite-box').style.display = 'block';
+    document.getElementById('cp-gen-invite').textContent = 'Nouveau code';
   });
 
-  document.getElementById('fc-join-btn').addEventListener('click', async () => {
-    const code = (document.getElementById('fc-join-code').value || '').trim().toUpperCase();
-    const errEl = document.getElementById('fc-join-error');
+  document.getElementById('cp-join-btn').addEventListener('click', async () => {
+    const code  = (document.getElementById('cp-join-code').value || '').trim().toUpperCase();
+    const errEl = document.getElementById('cp-join-error');
     errEl.style.display = 'none';
     if (code.length !== 6) {
-      errEl.textContent = 'Le code doit faire 6 caractères.';
-      errEl.style.display = 'block';
-      return;
+      errEl.textContent = 'Le code doit faire 6 caractères.'; errEl.style.display = 'block'; return;
     }
     try {
       const snap = await db.ref('invites/' + code).once('value');
       const inv  = snap.val();
-      if (!inv) {
-        errEl.textContent = 'Code introuvable.'; errEl.style.display = 'block'; return;
-      }
-      if (inv.expires < Date.now()) {
-        errEl.textContent = 'Code expiré.'; errEl.style.display = 'block'; return;
-      }
-      if (inv.ownerUid === currentUser.uid) {
-        errEl.textContent = 'C\'est votre propre code !'; errEl.style.display = 'block'; return;
-      }
+      if (!inv)                     { errEl.textContent = 'Code introuvable.';          errEl.style.display = 'block'; return; }
+      if (inv.expires < Date.now()) { errEl.textContent = 'Code expiré.';               errEl.style.display = 'block'; return; }
+      if (inv.ownerUid === currentUser.uid) { errEl.textContent = 'C\'est votre propre code !'; errEl.style.display = 'block'; return; }
       await db.ref('users/' + currentUser.uid + '/linkedTo/' + inv.ownerUid).set(true);
-      closeChildModal();
+      closeCoparentModal();
     } catch (e) {
-      errEl.textContent = 'Erreur : ' + (e.message || e.code);
-      errEl.style.display = 'block';
+      errEl.textContent = 'Erreur : ' + (e.message || e.code); errEl.style.display = 'block';
     }
   });
 
