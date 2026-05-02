@@ -132,34 +132,6 @@
       color: #fff; font-size: 1.1rem; cursor: pointer;
       display: flex; align-items: center; justify-content: center;
     }
-    #btn-ifttt {
-      position: absolute; top: 56px; left: 14px;
-      width: 34px; height: 34px; border-radius: 50%;
-      background: rgba(255,255,255,.2); border: 1.5px solid rgba(255,255,255,.4);
-      color: #fff; font-size: 1rem; cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-    }
-    /* ── IFTTT Modal ── */
-    #ifttt-overlay { position: fixed; inset: 0; z-index: 250; background: rgba(0,0,0,.55); display: none; align-items: flex-end; justify-content: center; }
-    .ifttt-sheet { background: white; border-radius: 24px 24px 0 0; padding: 20px 18px 36px; width: 100%; max-width: 540px; max-height: 88vh; overflow-y: auto; }
-    .ifttt-sheet h2 { font-size: 1.05rem; font-weight: 800; text-align: center; margin-bottom: 4px; }
-    .ifttt-sheet .ifttt-sub { font-size: .78rem; color: var(--muted); text-align: center; margin-bottom: 16px; }
-    .ifttt-steps { counter-reset: steps; }
-    .ifttt-step { display: flex; gap: 10px; margin-bottom: 18px; }
-    .ifttt-step-num { flex-shrink: 0; width: 26px; height: 26px; border-radius: 50%; background: var(--primary); color: white; font-size: .8rem; font-weight: 800; display: flex; align-items: center; justify-content: center; margin-top: 1px; }
-    .ifttt-step-body { flex: 1; }
-    .ifttt-step-title { font-size: .85rem; font-weight: 800; margin-bottom: 5px; }
-    .ifttt-step-text { font-size: .78rem; color: var(--muted); line-height: 1.5; }
-    .ifttt-step-text a { color: var(--primary); font-weight: 700; }
-    .ifttt-url-block { background: #f7f7ff; border: 1.5px solid var(--border); border-radius: 10px; padding: 9px 10px; margin: 6px 0; display: flex; align-items: center; gap: 6px; }
-    .ifttt-url-label { font-size: .72rem; font-weight: 800; color: var(--primary); white-space: nowrap; }
-    .ifttt-url-text { font-size: .65rem; color: var(--muted); font-family: monospace; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-    .ifttt-copy-btn { flex-shrink: 0; padding: 4px 9px; background: var(--primary); color: white; border: none; border-radius: 7px; font-size: .7rem; font-weight: 700; cursor: pointer; font-family: inherit; }
-    .ifttt-copy-btn.copied { background: #00b894; }
-    .ifttt-rules-block { background: #1e1e2e; border-radius: 10px; padding: 10px 12px; margin: 6px 0; font-family: monospace; font-size: .72rem; color: #a29bfe; line-height: 1.6; position: relative; }
-    .ifttt-rules-copy { position: absolute; top: 8px; right: 8px; padding: 3px 8px; background: #a29bfe; color: white; border: none; border-radius: 6px; font-size: .65rem; font-weight: 700; cursor: pointer; font-family: inherit; }
-    .ifttt-rules-copy.copied { background: #00b894; }
-    .ifttt-close-btn { display: block; width: 100%; padding: 13px; margin-top: 18px; background: var(--bg); color: var(--text); border: 2px solid var(--border); border-radius: 14px; font-size: .95rem; font-weight: 700; cursor: pointer; font-family: inherit; }
     .cp-section-title {
       font-size: .78rem; font-weight: 700; color: var(--muted);
       text-transform: uppercase; letter-spacing: .4px; margin-bottom: 8px;
@@ -651,29 +623,8 @@
 
 <header style="position:relative">
   <button id="btn-coparent" title="Co-parent">👫</button>
-  <button id="btn-ifttt" title="Config Alexa / IFTTT">⚡</button>
   <button id="btn-logout" title="Déconnexion"><span id="user-initial">?</span></button>
-  <h1 style="display:flex;align-items:center;justify-content:center;gap:8px">
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 110 68" height="34" style="flex-shrink:0">
-      <ellipse cx="46" cy="34" rx="40" ry="26" fill="#13133a"/>
-      <ellipse cx="36" cy="23" rx="20" ry="13" fill="rgba(255,255,255,0.07)"/>
-      <path d="M8,34 Q46,22 84,34 Q46,46 8,34Z" fill="white" opacity="0.9"/>
-      <line x1="46" y1="10" x2="46" y2="58" stroke="white" stroke-width="2" stroke-dasharray="3.5,3" opacity="0.45"/>
-      <circle cx="28" cy="27" r="9" fill="white"/>
-      <circle cx="28" cy="28.5" r="5.8" fill="#1a1a2e"/>
-      <circle cx="31" cy="25.5" r="2.4" fill="white"/>
-      <circle cx="56" cy="27" r="9" fill="white"/>
-      <circle cx="56" cy="28.5" r="5.8" fill="#1a1a2e"/>
-      <circle cx="59" cy="25.5" r="2.4" fill="white"/>
-      <ellipse cx="17" cy="40" rx="7" ry="5" fill="#ff7f7f" opacity="0.38"/>
-      <ellipse cx="67" cy="40" rx="7" ry="5" fill="#ff7f7f" opacity="0.38"/>
-      <rect x="83" y="32" width="11" height="5" fill="#fdcb6e" rx="2.5"/>
-      <ellipse cx="101" cy="34.5" rx="11" ry="9" fill="#a29bfe" stroke="#6c5ce7" stroke-width="2"/>
-      <ellipse cx="101" cy="34.5" rx="4.5" ry="4" fill="#8c7fe0"/>
-      <ellipse cx="108" cy="34.5" rx="5.5" ry="4" fill="#fdcb6e" stroke="#e0a800" stroke-width="1.2"/>
-    </svg>
-    Biberonnade
-  </h1>
+  <h1>Biberonnade</h1>
   <div class="stats-bar">
     <div class="chip">Aujourd'hui&nbsp;: <strong id="cnt">0</strong></div>
     <div class="chip">Dernière&nbsp;: <strong id="ago">—</strong></div>
@@ -991,114 +942,7 @@
   </div>
 </div>
 
-<!-- Modal IFTTT / Alexa -->
-<div id="ifttt-overlay">
-  <div class="ifttt-sheet">
-    <h2>⚡ Config Alexa Skill</h2>
-    <p class="ifttt-sub">Dites "Alexa, ouvre biberonnade" puis "sein gauche" ou "biberon poudre cent vingt"</p>
-    <div class="ifttt-steps">
 
-      <div class="ifttt-step">
-        <div class="ifttt-step-num">1</div>
-        <div class="ifttt-step-body">
-          <div class="ifttt-step-title">Compte développeur Amazon (gratuit)</div>
-          <div class="ifttt-step-text">Allez sur <a href="https://developer.amazon.com/alexa/console/ask" target="_blank">developer.amazon.com/alexa/console/ask</a> → connectez-vous avec votre compte Amazon habituel (celui de l'enceinte).</div>
-        </div>
-      </div>
-
-      <div class="ifttt-step">
-        <div class="ifttt-step-num">2</div>
-        <div class="ifttt-step-body">
-          <div class="ifttt-step-title">Créer la skill</div>
-          <div class="ifttt-step-text">
-            Cliquez <strong>Create Skill</strong><br>
-            • Nom : <strong>Biberonnade</strong><br>
-            • Langue : <strong>French (FR)</strong><br>
-            • Model : <strong>Custom</strong><br>
-            • Backend : <strong>Alexa-Hosted (Node.js)</strong> ← pas besoin d'AWS !<br>
-            • Template : <strong>Start from scratch</strong> (ou l'option vide/basique) → cliquez <strong>Create Skill</strong>
-          </div>
-        </div>
-      </div>
-
-      <div class="ifttt-step">
-        <div class="ifttt-step-num">3</div>
-        <div class="ifttt-step-body">
-          <div class="ifttt-step-title">Coller le modèle de conversation</div>
-          <div class="ifttt-step-text">
-            Dans l'onglet <strong>Build</strong> → menu gauche <strong>JSON Editor</strong><br>
-            Effacez tout et collez le contenu du fichier <strong>alexa-skill/interaction-model.json</strong> (disponible sur GitHub)<br>
-            Cliquez <strong>Save Model</strong> puis <strong>Build Model</strong>
-          </div>
-        </div>
-      </div>
-
-      <div class="ifttt-step">
-        <div class="ifttt-step-num">4</div>
-        <div class="ifttt-step-body">
-          <div class="ifttt-step-title">Coller le code + votre token secret</div>
-          <div class="ifttt-step-text">
-            Dans l'onglet <strong>Code</strong> → remplacez le contenu de <strong>index.js</strong> par le fichier <strong>alexa-skill/lambda/index.js</strong> (sur GitHub)<br><br>
-            Toujours dans l'onglet Code → cliquez <strong>Environment variables</strong> (en haut à droite)<br>
-            Ajoutez une variable :<br>
-            • Clé : <strong>WEBHOOK_TOKEN</strong><br>
-            • Valeur : votre token ci-dessous
-          </div>
-          <div style="margin-top:8px">
-            <div class="ifttt-url-block" style="flex-direction:column;align-items:flex-start;gap:6px">
-              <div style="font-size:.75rem;font-weight:800;color:var(--text)">🔑 Votre token secret</div>
-              <div style="display:flex;align-items:center;gap:8px;width:100%">
-                <div class="ifttt-url-text" id="ifttt-token-display" style="font-size:.72rem;font-weight:700;color:var(--primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Chargement…</div>
-                <button class="ifttt-copy-btn" id="ifttt-token-copy-btn">Token ⎘</button>
-              </div>
-            </div>
-          </div>
-          <div class="ifttt-step-text" style="margin-top:8px">
-            Cliquez <strong>Save</strong> puis <strong>Deploy</strong>
-          </div>
-        </div>
-      </div>
-
-      <div class="ifttt-step">
-        <div class="ifttt-step-num">5</div>
-        <div class="ifttt-step-body">
-          <div class="ifttt-step-title">Ajouter la règle Firebase (1 fois)</div>
-          <div class="ifttt-step-text">Dans la <a href="https://console.firebase.google.com/project/suivi-biberon/database/suivi-biberon-default-rtdb/rules" target="_blank">Console Firebase → Rules</a>, ajoutez ce bloc&nbsp;:</div>
-          <div class="ifttt-rules-block" id="ifttt-rules-block">
-"ifttt_inbox": {
-  "$token": {
-    ".read": "auth !== null",
-    ".write": "true"
-  }
-}
-            <button class="ifttt-rules-copy" id="ifttt-rules-copy-btn">Copier</button>
-          </div>
-        </div>
-      </div>
-
-      <div class="ifttt-step">
-        <div class="ifttt-step-num">6</div>
-        <div class="ifttt-step-body">
-          <div class="ifttt-step-title">Tester</div>
-          <div class="ifttt-step-text">
-            Dans l'onglet <strong>Test</strong> de la console Alexa → activez le mode test.<br>
-            Dites sur votre enceinte : <strong>"Alexa, ouvre biberonnade"</strong><br>
-            Puis : <strong>"sein gauche"</strong> ou <strong>"biberon poudre cent vingt"</strong><br><br>
-            La skill reste en mode dev et fonctionne sur tous les appareils Alexa liés à votre compte Amazon.
-          </div>
-        </div>
-      </div>
-
-    </div>
-    <div style="background:#f0fff8;border:1.5px solid #00b894;border-radius:10px;padding:10px 12px;font-size:.75rem;line-height:1.6;margin-bottom:4px">
-      🗣 <strong>Commandes vocales :</strong><br>
-      "Alexa, ouvre biberonnade" → puis "sein gauche / sein droit / les deux seins"<br>
-      "Alexa, ouvre biberonnade" → puis "biberon maternel" ou "biberon poudre cent vingt"<br>
-      Ou en une phrase : <strong>"Alexa, dis à biberonnade sein gauche"</strong>
-    </div>
-    <button class="ifttt-close-btn" id="ifttt-close-btn">Fermer</button>
-  </div>
-</div>
 
 <!-- Overlay modal étape -->
 <div id="etape-overlay">
@@ -1538,8 +1382,6 @@
     }
     children = {}; sharedChildren = {}; activeChildId = null; activeOwnerUid = null;
     entries = []; soins = []; mesures = []; etapes = {};
-    webhookToken = null;
-    if (iftttInboxRef) { iftttInboxRef.off(); iftttInboxRef = null; }
     render(); renderChildSelector();
   }
 
@@ -1587,7 +1429,6 @@
       babyGender = p.gender || 'garcon';
       bainReminderDays = (p.bainReminderDays !== undefined) ? p.bainReminderDays : 2;
       document.getElementById('bain-reminder-count').textContent = bainReminderDays;
-      initWebhookToken(p);
       renderAge(); checkReminders();
     });
     childMesuresRef().on('value', snap => {
@@ -1615,8 +1456,6 @@
     if (activeOwnerUid) localStorage.setItem('acouid_' + currentUser.uid, activeOwnerUid);
     else localStorage.removeItem('acouid_' + currentUser.uid);
     entries = []; soins = []; mesures = []; etapes = {};
-    webhookToken = null;
-    if (iftttInboxRef) { iftttInboxRef.off(); iftttInboxRef = null; }
     render(); renderStats(); renderSoins(); renderCroissance(); renderEtapes();
     renderChildSelector();
     attachChildListeners();
@@ -2585,140 +2424,6 @@
 
   document.addEventListener('visibilitychange', () => { if (!document.hidden) checkReminders(); });
 
-  /* ── IFTTT / Alexa webhook ── */
-  let webhookToken = null;
-  let iftttInboxRef = null;
-
-  function generateWebhookToken() {
-    return 'xxxxxxxxxxxx4xxxyxxxxxxxxxxxxxxx'.replace(/[xy]/g, c => {
-      const r = Math.random() * 16 | 0;
-      return (c === 'x' ? r : (r & 0x3 | 0x8)).toString(16);
-    });
-  }
-
-  function iftttInboxPath() {
-    return 'ifttt_inbox/' + webhookToken;
-  }
-
-  function attachIftttListener() {
-    if (iftttInboxRef) { iftttInboxRef.off(); iftttInboxRef = null; }
-    if (!webhookToken || !activeChildId || activeOwnerUid) return;
-    iftttInboxRef = db.ref(iftttInboxPath());
-    iftttInboxRef.on('child_added', snap => {
-      const data = snap.val();
-      if (!data || !data.type) { snap.ref.remove(); return; }
-      let datetime;
-      if (typeof data.datetime === 'number') {
-        datetime = new Date(data.datetime).toISOString();
-      } else if (data.datetime && data.datetime['.sv'] !== 'timestamp') {
-        try { datetime = new Date(data.datetime).toISOString(); } catch(e) { datetime = new Date().toISOString(); }
-      } else {
-        datetime = new Date().toISOString();
-      }
-      const entry = { type: data.type, datetime };
-      if (data.biberon_type) entry.biberon_type = data.biberon_type;
-      if (data.duration)     entry.duration     = +data.duration;
-      if (data.quantity)     entry.quantity     = +data.quantity;
-      childEntriesRef().push(entry);
-      snap.ref.remove();
-    });
-  }
-
-  function initWebhookToken(profile) {
-    if (activeOwnerUid) return;
-    if (profile && profile.webhookToken) {
-      webhookToken = profile.webhookToken;
-    } else {
-      webhookToken = generateWebhookToken();
-      childProfileRef().update({ webhookToken });
-    }
-    attachIftttListener();
-  }
-
-  function buildIftttAppletsHTML() {
-    if (!webhookToken) return '';
-    const base = `https://suivi-biberon-default-rtdb.europe-west1.firebasedatabase.app/${iftttInboxPath()}.json`;
-    const dt = '{{TriggeredAt | date: "%s"}}000';
-
-    const exact = [
-      { phrase: 'sein gauche',    body: `{"type":"sein_gauche","datetime":${dt}}`,                                    label: 'Sein gauche'     },
-      { phrase: 'sein droit',     body: `{"type":"sein_droit","datetime":${dt}}`,                                     label: 'Sein droit'      },
-      { phrase: 'les deux seins', body: `{"type":"les_deux","datetime":${dt}}`,                                       label: 'Les deux'        },
-      { phrase: 'biberon mat',    body: `{"type":"biberon","biberon_type":"maternel","datetime":${dt}}`,              label: 'Biberon maternel (sans quantité)' },
-      { phrase: 'biberon poudre', body: `{"type":"biberon","biberon_type":"poudre","datetime":${dt}}`,                label: 'Biberon poudre (sans quantité)'  },
-    ];
-    const withQty = [
-      { phrase: 'biberon mat #',    body: `{"type":"biberon","biberon_type":"maternel","quantity":{{NumberField}},"datetime":${dt}}`, label: 'Biberon maternel + quantité' },
-      { phrase: 'biberon poudre #', body: `{"type":"biberon","biberon_type":"poudre","quantity":{{NumberField}},"datetime":${dt}}`,   label: 'Biberon poudre + quantité'   },
-    ];
-
-    function appletCard(a, i, hasNum) {
-      const encodedUrl = encodeURIComponent(base);
-      const triggerType = hasNum
-        ? '<span style="background:#fdcb6e;color:#7a5800;padding:1px 6px;border-radius:6px;font-size:.65rem;font-weight:800">Phrase + nombre</span>'
-        : '<span style="background:#dfe6e9;color:var(--muted);padding:1px 6px;border-radius:6px;font-size:.65rem;font-weight:800">Phrase exacte</span>';
-      return `
-        <div class="ifttt-url-block" style="flex-direction:column;align-items:flex-start;gap:5px">
-          <div style="display:flex;align-items:center;gap:6px;width:100%;flex-wrap:wrap">
-            ${triggerType}
-            <span style="font-size:.75rem;font-weight:800;color:var(--text);flex:1">🗣 "${a.phrase}"  →  ${a.label}</span>
-            <button class="ifttt-copy-btn" data-copy-url="${encodedUrl}" data-idx="${i}">URL ⎘</button>
-          </div>
-          <div style="font-size:.63rem;color:var(--muted);font-family:monospace;word-break:break-all;line-height:1.6">
-            Body&nbsp;: <span style="color:#6c5ce7">${a.body.replace(/</g,'&lt;')}</span>
-          </div>
-        </div>`;
-    }
-
-    return `
-      <div style="font-size:.75rem;color:#636e72;background:#fff9e6;border:1.5px solid #f9d71c;border-radius:10px;padding:9px 11px;margin:8px 0;line-height:1.6">
-        ⏱ <strong>L'heure</strong> est celle du déclenchement vocal.<br>
-        Pour la corriger, tapez l'entrée dans le journal et modifiez la date/heure.
-      </div>
-      <div style="font-size:.8rem;font-weight:800;color:var(--muted);margin:10px 0 6px">Seins &amp; biberon sans quantité <em>(trigger : "Say a specific phrase")</em></div>
-      ${exact.map((a, i) => appletCard(a, i, false)).join('')}
-      <div style="font-size:.8rem;font-weight:800;color:var(--muted);margin:14px 0 6px">Biberon avec quantité en ml <em>(trigger : "Say a phrase with a number")</em></div>
-      <div style="font-size:.73rem;color:var(--muted);margin-bottom:8px;line-height:1.5">
-        Dites par ex. <strong>"Alexa, trigger biberon poudre 120"</strong> → enregistre 120 ml.<br>
-        Dans IFTTT, choisissez le trigger <em>"Say a phrase with a number"</em> (et non "specific phrase").
-      </div>
-      ${withQty.map((a, i) => appletCard(a, i, true)).join('')}
-    `;
-  }
-
-  function openIftttModal() {
-    // Token secret
-    const tokenDisplay = document.getElementById('ifttt-token-display');
-    if (tokenDisplay) tokenDisplay.textContent = webhookToken || '—';
-
-    document.getElementById('ifttt-overlay').style.display = 'flex';
-
-    // Bouton copier le token
-    const tokenCopyBtn = document.getElementById('ifttt-token-copy-btn');
-    if (tokenCopyBtn && webhookToken) {
-      tokenCopyBtn.onclick = () => {
-        navigator.clipboard.writeText(webhookToken).then(() => {
-          tokenCopyBtn.textContent = '✓ Copié'; tokenCopyBtn.classList.add('copied');
-          setTimeout(() => { tokenCopyBtn.textContent = 'Token ⎘'; tokenCopyBtn.classList.remove('copied'); }, 2000);
-        });
-      };
-    }
-  }
-
-  document.getElementById('btn-ifttt').addEventListener('click', openIftttModal);
-  document.getElementById('ifttt-close-btn').addEventListener('click', () => {
-    document.getElementById('ifttt-overlay').style.display = 'none';
-  });
-  document.getElementById('ifttt-overlay').addEventListener('click', e => {
-    if (e.target === document.getElementById('ifttt-overlay'))
-      document.getElementById('ifttt-overlay').style.display = 'none';
-  });
-  document.getElementById('ifttt-rules-copy-btn').addEventListener('click', function() {
-    const rules = `"ifttt_inbox": {\n  "$token": {\n    ".read": "auth !== null",\n    ".write": "true"\n  }\n}`;
-    navigator.clipboard.writeText(rules).then(() => {
-      this.textContent = '✓ Copié'; this.classList.add('copied');
-      setTimeout(() => { this.textContent = 'Copier'; this.classList.remove('copied'); }, 2000);
-    });
   });
 
   /* ── Étapes / Jalons ── */
