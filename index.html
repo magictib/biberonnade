@@ -28,8 +28,10 @@
     header { background: var(--primary); color: #fff; padding: 20px 16px 22px; text-align: center; }
     header h1 { font-size: 1.5rem; font-weight: 800; }
     .stats-bar { display: flex; justify-content: center; gap: 7px; margin-top: 11px; flex-wrap: wrap; }
-    .chip { background: rgba(255,255,255,.22); border-radius: 20px; padding: 5px 11px; font-size: .76rem; }
+    .chip { background: rgba(255,255,255,.22); border-radius: 20px; padding: 5px 11px; font-size: .76rem; transition: background .3s; }
     .chip strong { font-weight: 700; }
+    .chip.chip-warn  { background: rgba(230,126,34,.55); }
+    .chip.chip-alert { background: rgba(192,57,43,.6); }
 
     .fab {
       position: fixed; bottom: 76px; right: 24px;
@@ -483,7 +485,8 @@
       padding: 6px 14px; font-size: .82rem; font-weight: 700; white-space: nowrap;
       transition: background .2s, color .2s;
     }
-    .bain-card.bain-done .bain-badge { background: #c8edfd; color: #0e4a80; }
+    .bain-card.bain-done  .bain-badge { background: #c8edfd; color: #0e4a80; }
+    .bain-card.bain-dirty .bain-badge { background: #fff0eb; color: #c0392b; border: 1.5px solid #e17055; }
 
     /* Chronomètre */
     .chrono-container { display: none; background: var(--bg); border-radius: 16px; padding: 16px; margin-bottom: 16px; border: 2px solid var(--primary); }
@@ -558,7 +561,7 @@
   <div class="stats-bar">
     <div class="chip">Aujourd'hui&nbsp;: <strong id="cnt">0</strong></div>
     <div class="chip">Dernière&nbsp;: <strong id="ago">—</strong></div>
-    <div class="chip">Dernier poudre&nbsp;: <strong id="ago-poudre">—</strong></div>
+    <div class="chip" id="chip-poudre">Dernier poudre&nbsp;: <strong id="ago-poudre">—</strong></div>
     <div class="chip"><span class="sync-dot off" id="dot"></span><span id="sync-lbl">Connexion…</span></div>
   </div>
   <div class="child-selector">
@@ -1318,7 +1321,16 @@
     document.getElementById('cnt').textContent = entries.filter(e => dateKey(e.datetime) === todayK).length;
     document.getElementById('ago').textContent = entries.length ? timeSince(entries[0].datetime) : '—';
     const lastPoudre = entries.find(e => e.type === 'biberon' && e.biberon_type === 'poudre');
-    document.getElementById('ago-poudre').textContent = lastPoudre ? timeSince(lastPoudre.datetime) : '—';
+    const chipPoudre = document.getElementById('chip-poudre');
+    if (lastPoudre) {
+      const days = Math.floor((Date.now() - new Date(lastPoudre.datetime)) / 86400000);
+      document.getElementById('ago-poudre').textContent =
+        days === 0 ? "aujourd'hui" : days === 1 ? '1 jour' : days + ' jours';
+      chipPoudre.className = 'chip' + (days >= 6 ? ' chip-alert' : days >= 4 ? ' chip-warn' : '');
+    } else {
+      document.getElementById('ago-poudre').textContent = '—';
+      chipPoudre.className = 'chip';
+    }
   }
 
   /* ── Render journal ── */
@@ -1643,8 +1655,19 @@
 
     const bainCard = document.getElementById('soin-bain');
     bainCard.classList.toggle('bain-done', bathedToday);
-    const propre = babyGender === 'fille' ? 'Toute propre' : 'Tout propre';
-    document.getElementById('bain-badge').textContent = bathedToday ? '✓ Fait' : propre;
+    let bainBadge = bathedToday ? '✓ Fait' : (babyGender === 'fille' ? 'Toute propre' : 'Tout propre');
+    let bainDirty = false;
+    if (!bathedToday && bainReminderDays > 0) {
+      if (!lastBain) {
+        bainDirty = true;
+        bainBadge = 'Sale !';
+      } else {
+        const dSince = Math.floor((Date.now() - new Date(lastBain.datetime)) / 86400000);
+        if (dSince > bainReminderDays) { bainDirty = true; bainBadge = 'Sale !'; }
+      }
+    }
+    bainCard.classList.toggle('bain-dirty', bainDirty);
+    document.getElementById('bain-badge').textContent = bainBadge;
 
     if (lastBain) {
       const daysSince = Math.floor((Date.now() - new Date(lastBain.datetime)) / 86400000);
