@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="theme-color" content="#6c5ce7">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <title>Tétées</title>
+  <title>Biberonnade</title>
+  <meta name="apple-mobile-web-app-title" content="Biberonnade">
   <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-database-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.13.0/firebase-auth-compat.js"></script>
@@ -524,6 +525,38 @@
       background: rgba(0,0,0,.1); color: inherit; transition: transform .1s;
     }
     .reminder-cta:active { transform: scale(.95); }
+
+    /* ── Étapes (jalons) ── */
+    .etapes-page { padding: 16px; max-width: 600px; margin: 0 auto; }
+    .etapes-progress-bar { background: var(--card); border-radius: var(--r); padding: 14px 16px; box-shadow: var(--shadow); margin-bottom: 18px; }
+    .etapes-progress-label { font-size: .82rem; font-weight: 700; color: var(--muted); margin-bottom: 8px; display: flex; justify-content: space-between; }
+    .etapes-progress-track { background: var(--border); border-radius: 8px; height: 8px; overflow: hidden; }
+    .etapes-progress-fill { height: 100%; border-radius: 8px; background: linear-gradient(90deg, #00b894, #55efc4); transition: width .5s ease; }
+    .etapes-section-title { font-size: .82rem; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: .6px; margin: 18px 0 10px; }
+    .etapes-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+    .etape-card { background: var(--card); border-radius: var(--r); padding: 14px 12px 12px; box-shadow: var(--shadow); display: flex; flex-direction: column; align-items: center; text-align: center; gap: 5px; position: relative; transition: transform .12s; }
+    .etape-card:active { transform: scale(.97); }
+    .etape-icon { font-size: 2rem; line-height: 1.1; }
+    .etape-label { font-size: .78rem; font-weight: 700; color: var(--text); line-height: 1.25; }
+    .etape-done { border: 2px solid #00b894; background: linear-gradient(145deg, #f0fff9, #fff); }
+    .etape-date { font-size: .71rem; color: #00b894; font-weight: 800; }
+    .etape-note { font-size: .68rem; color: var(--muted); font-style: italic; line-height: 1.3; }
+    .etape-pending { border: 2px solid var(--border); }
+    .etape-mark-btn { margin-top: 4px; padding: 5px 14px; background: var(--primary); color: white; border: none; border-radius: 10px; font-size: .72rem; font-weight: 700; cursor: pointer; font-family: inherit; transition: transform .1s; }
+    .etape-mark-btn:active { transform: scale(.95); }
+    .etape-edit-btn { position: absolute; top: 7px; right: 7px; background: none; border: none; cursor: pointer; font-size: .8rem; opacity: .5; padding: 2px; }
+    /* Modal étape */
+    #etape-overlay { position: fixed; inset: 0; z-index: 250; background: rgba(0,0,0,.5); display: none; align-items: flex-end; justify-content: center; }
+    .etape-sheet { background: white; border-radius: 24px 24px 0 0; padding: 20px 20px 32px; width: 100%; max-width: 500px; }
+    .etape-sheet h3 { font-size: 1rem; font-weight: 800; margin-bottom: 16px; text-align: center; }
+    .etape-field label { display: block; font-size: .8rem; font-weight: 700; color: var(--muted); margin-bottom: 5px; }
+    .etape-field { margin-bottom: 12px; }
+    .etape-field input, .etape-field textarea { width: 100%; padding: 11px 13px; border: 2px solid var(--border); border-radius: 12px; font-size: .95rem; font-family: inherit; color: var(--text); -webkit-appearance: none; }
+    .etape-field input:focus, .etape-field textarea:focus { outline: none; border-color: var(--primary); }
+    .etape-field textarea { resize: none; height: 64px; }
+    .etape-modal-btns { display: flex; gap: 8px; margin-top: 4px; }
+    .etape-btn-save { flex: 1; padding: 13px; background: var(--primary); color: white; border: none; border-radius: 14px; font-size: .95rem; font-weight: 700; cursor: pointer; font-family: inherit; }
+    .etape-btn-delete { padding: 13px 16px; background: #fff0f0; color: #c0392b; border: 2px solid #e17055; border-radius: 14px; font-size: .85rem; font-weight: 700; cursor: pointer; font-family: inherit; display: none; }
   </style>
 </head>
 <body>
@@ -531,8 +564,42 @@
 <!-- ══ AUTH OVERLAY ══ -->
 <div id="auth-overlay">
   <div class="auth-card">
-    <div class="auth-logo">🍼</div>
-    <div class="auth-app-name">Tétées</div>
+    <div class="auth-logo">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 110 68" width="110" height="68">
+        <!-- Ombre -->
+        <ellipse cx="46" cy="64" rx="30" ry="4" fill="rgba(0,0,0,0.18)"/>
+        <!-- Corps du ballon -->
+        <ellipse cx="46" cy="34" rx="40" ry="26" fill="#13133a"/>
+        <!-- Reflet -->
+        <ellipse cx="36" cy="23" rx="20" ry="13" fill="rgba(255,255,255,0.07)"/>
+        <!-- Bande blanche centrale -->
+        <path d="M8,34 Q46,22 84,34 Q46,46 8,34Z" fill="white" opacity="0.9"/>
+        <!-- Lacets verticaux -->
+        <line x1="46" y1="10" x2="46" y2="58" stroke="white" stroke-width="2" stroke-dasharray="3.5,3" opacity="0.45"/>
+        <line x1="38" y1="30" x2="54" y2="30" stroke="white" stroke-width="1.2" opacity="0.38"/>
+        <line x1="38" y1="38" x2="54" y2="38" stroke="white" stroke-width="1.2" opacity="0.38"/>
+        <!-- Oeil gauche -->
+        <circle cx="28" cy="27" r="9" fill="white"/>
+        <circle cx="28" cy="28.5" r="5.8" fill="#1a1a2e"/>
+        <circle cx="31" cy="25.5" r="2.4" fill="white"/>
+        <!-- Oeil droit -->
+        <circle cx="56" cy="27" r="9" fill="white"/>
+        <circle cx="56" cy="28.5" r="5.8" fill="#1a1a2e"/>
+        <circle cx="59" cy="25.5" r="2.4" fill="white"/>
+        <!-- Joues roses -->
+        <ellipse cx="17" cy="40" rx="7" ry="5" fill="#ff7f7f" opacity="0.38"/>
+        <ellipse cx="67" cy="40" rx="7" ry="5" fill="#ff7f7f" opacity="0.38"/>
+        <!-- Tétine au bout droit du ballon -->
+        <!-- Tige de connexion -->
+        <rect x="83" y="32" width="11" height="5" fill="#fdcb6e" rx="2.5"/>
+        <!-- Bouclier/anneau de la tétine -->
+        <ellipse cx="101" cy="34.5" rx="11" ry="9" fill="#a29bfe" stroke="#6c5ce7" stroke-width="2"/>
+        <ellipse cx="101" cy="34.5" rx="4.5" ry="4" fill="#8c7fe0"/>
+        <!-- Bout en caoutchouc (tétine) -->
+        <ellipse cx="108" cy="34.5" rx="5.5" ry="4" fill="#fdcb6e" stroke="#e0a800" stroke-width="1.2"/>
+      </svg>
+    </div>
+    <div class="auth-app-name">Biberonnade</div>
     <div class="auth-app-sub">Suivi bébé</div>
     <div id="auth-title">Connexion</div>
     <div class="auth-error" id="auth-error"></div>
@@ -557,7 +624,27 @@
 <header style="position:relative">
   <button id="btn-coparent" title="Co-parent">👫</button>
   <button id="btn-logout" title="Déconnexion"><span id="user-initial">?</span></button>
-  <h1>🍼 Tétées</h1>
+  <h1 style="display:flex;align-items:center;justify-content:center;gap:8px">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 110 68" height="34" style="flex-shrink:0">
+      <ellipse cx="46" cy="34" rx="40" ry="26" fill="#13133a"/>
+      <ellipse cx="36" cy="23" rx="20" ry="13" fill="rgba(255,255,255,0.07)"/>
+      <path d="M8,34 Q46,22 84,34 Q46,46 8,34Z" fill="white" opacity="0.9"/>
+      <line x1="46" y1="10" x2="46" y2="58" stroke="white" stroke-width="2" stroke-dasharray="3.5,3" opacity="0.45"/>
+      <circle cx="28" cy="27" r="9" fill="white"/>
+      <circle cx="28" cy="28.5" r="5.8" fill="#1a1a2e"/>
+      <circle cx="31" cy="25.5" r="2.4" fill="white"/>
+      <circle cx="56" cy="27" r="9" fill="white"/>
+      <circle cx="56" cy="28.5" r="5.8" fill="#1a1a2e"/>
+      <circle cx="59" cy="25.5" r="2.4" fill="white"/>
+      <ellipse cx="17" cy="40" rx="7" ry="5" fill="#ff7f7f" opacity="0.38"/>
+      <ellipse cx="67" cy="40" rx="7" ry="5" fill="#ff7f7f" opacity="0.38"/>
+      <rect x="83" y="32" width="11" height="5" fill="#fdcb6e" rx="2.5"/>
+      <ellipse cx="101" cy="34.5" rx="11" ry="9" fill="#a29bfe" stroke="#6c5ce7" stroke-width="2"/>
+      <ellipse cx="101" cy="34.5" rx="4.5" ry="4" fill="#8c7fe0"/>
+      <ellipse cx="108" cy="34.5" rx="5.5" ry="4" fill="#fdcb6e" stroke="#e0a800" stroke-width="1.2"/>
+    </svg>
+    Biberonnade
+  </h1>
   <div class="stats-bar">
     <div class="chip">Aujourd'hui&nbsp;: <strong id="cnt">0</strong></div>
     <div class="chip">Dernière&nbsp;: <strong id="ago">—</strong></div>
@@ -859,6 +946,41 @@
   </div>
 </div>
 
+<!-- Étapes / Jalons -->
+<div id="view-etapes" style="display:none">
+  <div class="etapes-page">
+    <div class="etapes-progress-bar">
+      <div class="etapes-progress-label">
+        <span>🌟 Jalons atteints</span>
+        <span id="etapes-score">0 / 19</span>
+      </div>
+      <div class="etapes-progress-track">
+        <div class="etapes-progress-fill" id="etapes-progress-fill" style="width:0%"></div>
+      </div>
+    </div>
+    <div id="etapes-content"></div>
+  </div>
+</div>
+
+<!-- Overlay modal étape -->
+<div id="etape-overlay">
+  <div class="etape-sheet">
+    <h3 id="etape-modal-title">Marquer un jalon</h3>
+    <div class="etape-field">
+      <label for="etape-date-input">📅 Date</label>
+      <input type="date" id="etape-date-input">
+    </div>
+    <div class="etape-field">
+      <label for="etape-note-input">💬 Note (optionnel)</label>
+      <textarea id="etape-note-input" placeholder="Ex : premier sourire au réveil…"></textarea>
+    </div>
+    <div class="etape-modal-btns">
+      <button class="etape-btn-delete" id="etape-delete-btn">🗑 Supprimer</button>
+      <button class="etape-btn-save" id="etape-save-btn">Enregistrer ✓</button>
+    </div>
+  </div>
+</div>
+
 <button class="fab" id="fab">+</button>
 
 <nav class="bottom-nav">
@@ -867,6 +989,7 @@
   <button class="nav-btn" id="nav-age"><span class="nav-icon">👶</span>Âge</button>
   <button class="nav-btn" id="nav-soins"><span class="nav-icon">🏥</span>Soins</button>
   <button class="nav-btn" id="nav-croissance"><span class="nav-icon">📏</span>Croissance</button>
+  <button class="nav-btn" id="nav-etapes"><span class="nav-icon">🌟</span>Étapes</button>
   <button class="nav-btn" id="nav-infos"><span class="nav-icon">📋</span>Infos</button>
 </nav>
 
@@ -997,7 +1120,30 @@
     biberon:     { label: 'Biberon',        emoji: '🍼', cls: 'icon-biberon'     },
   };
 
-  let entries = [], soins = [], mesures = [];
+  const ETAPES_DEF = [
+    { key: 'premier_sourire',     label: 'Premier sourire',           icon: '😊' },
+    { key: 'premier_rire',        label: 'Premier rire',              icon: '😄' },
+    { key: 'premiers_gazouillis', label: 'Premiers gazouillis',       icon: '🎵' },
+    { key: 'suit_yeux',           label: 'Suit des yeux',             icon: '👀' },
+    { key: 'reconnait_parents',   label: 'Reconnaît papa / maman',    icon: '❤️' },
+    { key: 'tient_tete',          label: 'Tient la tête',             icon: '💪' },
+    { key: 'se_retourne',         label: 'Se retourne seul·e',        icon: '🔄' },
+    { key: 'saisit_objet',        label: 'Saisit un objet',           icon: '✋' },
+    { key: 'assis_aide',          label: "S'assoit avec aide",        icon: '🪑' },
+    { key: 'quatre_pattes',       label: 'À 4 pattes',                icon: '🐾' },
+    { key: 'assis_seul',          label: "S'assoit seul·e",           icon: '🧘' },
+    { key: 'debout_appui',        label: "Se lève en s'appuyant",     icon: '🧗' },
+    { key: 'premiers_pas',        label: 'Premiers pas',              icon: '👣' },
+    { key: 'premiere_dent',       label: 'Première dent',             icon: '🦷' },
+    { key: 'premier_mot',         label: 'Premier mot',               icon: '🗣️' },
+    { key: 'premiere_nuit',       label: 'Première nuit complète',    icon: '💤' },
+    { key: 'premiere_diversif',   label: 'Première diversification',  icon: '🥣' },
+    { key: 'repond_prenom',       label: 'Répond à son prénom',       icon: '👂' },
+    { key: 'premier_voyage',      label: 'Premier voyage',            icon: '🚗' },
+  ];
+
+  let entries = [], soins = [], mesures = [], etapes = {};
+  let etapeEditKey = null;
   let selType = 'sein_gauche', selBibType = 'maternel', editId = null;
   let statPeriod = 7, statMode = 'count';
   let birthDate = new Date(), babyGender = 'garcon';
@@ -1025,6 +1171,7 @@
   function childSoinsRef()   { return db.ref(ur() + '/children/' + activeChildId + '/soins'); }
   function childProfileRef() { return db.ref(ur() + '/children/' + activeChildId + '/profile'); }
   function childMesuresRef() { return db.ref(ur() + '/children/' + activeChildId + '/mesures'); }
+  function childEtapesRef()  { return db.ref(ur() + '/children/' + activeChildId + '/etapes'); }
 
   /* ── Auth ── */
   /* ── Auth ── */
@@ -1249,9 +1396,10 @@
       db.ref(ownerPath + '/children/' + activeChildId + '/soins').off();
       db.ref(ownerPath + '/children/' + activeChildId + '/profile').off();
       db.ref(ownerPath + '/children/' + activeChildId + '/mesures').off();
+      db.ref(ownerPath + '/children/' + activeChildId + '/etapes').off();
     }
     children = {}; sharedChildren = {}; activeChildId = null; activeOwnerUid = null;
-    entries = []; soins = []; mesures = [];
+    entries = []; soins = []; mesures = []; etapes = {};
     render(); renderChildSelector();
   }
 
@@ -1305,6 +1453,10 @@
       mesures = Object.entries(snap.val() || {}).map(([id, v]) => ({ id, ...v }));
       renderCroissance();
     });
+    childEtapesRef().on('value', snap => {
+      etapes = snap.val() || {};
+      renderEtapes();
+    });
   }
 
   function switchChild(id, ownerUid) {
@@ -1314,14 +1466,15 @@
       db.ref(prevPath + '/children/' + activeChildId + '/soins').off();
       db.ref(prevPath + '/children/' + activeChildId + '/profile').off();
       db.ref(prevPath + '/children/' + activeChildId + '/mesures').off();
+      db.ref(prevPath + '/children/' + activeChildId + '/etapes').off();
     }
     activeOwnerUid = ownerUid || null;
     activeChildId = id;
     localStorage.setItem('acid_' + currentUser.uid, id);
     if (activeOwnerUid) localStorage.setItem('acouid_' + currentUser.uid, activeOwnerUid);
     else localStorage.removeItem('acouid_' + currentUser.uid);
-    entries = []; soins = []; mesures = [];
-    render(); renderStats(); renderSoins(); renderCroissance();
+    entries = []; soins = []; mesures = []; etapes = {};
+    render(); renderStats(); renderSoins(); renderCroissance(); renderEtapes();
     renderChildSelector();
     attachChildListeners();
   }
@@ -1820,7 +1973,7 @@
 
   /* ── Navigation ── */
   function showTab(tab) {
-    ['journal','stats','age','soins','croissance','infos'].forEach(t => {
+    ['journal','stats','age','soins','croissance','etapes','infos'].forEach(t => {
       document.getElementById('view-' + t).style.display = t === tab ? 'block' : 'none';
       document.getElementById('nav-' + t).classList.toggle('active', t === tab);
     });
@@ -1829,6 +1982,7 @@
     if (tab === 'age') renderAge();
     if (tab === 'soins') renderSoins();
     if (tab === 'croissance') renderCroissance();
+    if (tab === 'etapes') renderEtapes();
   }
 
   document.getElementById('nav-journal').addEventListener('click',    () => showTab('journal'));
@@ -1836,6 +1990,7 @@
   document.getElementById('nav-age').addEventListener('click',        () => showTab('age'));
   document.getElementById('nav-soins').addEventListener('click',      () => showTab('soins'));
   document.getElementById('nav-croissance').addEventListener('click', () => showTab('croissance'));
+  document.getElementById('nav-etapes').addEventListener('click',     () => showTab('etapes'));
   document.getElementById('nav-infos').addEventListener('click',      () => showTab('infos'));
 
   // Boutons + et − pour pipi / caca
@@ -2286,6 +2441,93 @@
   });
 
   document.addEventListener('visibilitychange', () => { if (!document.hidden) checkReminders(); });
+
+  /* ── Étapes / Jalons ── */
+  function fmtEtapeDate(dateStr) {
+    return new Date(dateStr + 'T12:00:00').toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' });
+  }
+
+  function renderEtapes() {
+    const total    = ETAPES_DEF.length;
+    const achieved = ETAPES_DEF.filter(e => etapes[e.key]);
+    const pending  = ETAPES_DEF.filter(e => !etapes[e.key]);
+    achieved.sort((a, b) => etapes[a.key].date < etapes[b.key].date ? -1 : 1);
+
+    document.getElementById('etapes-score').textContent = achieved.length + ' / ' + total;
+    document.getElementById('etapes-progress-fill').style.width = Math.round(achieved.length / total * 100) + '%';
+
+    let html = '';
+
+    if (achieved.length) {
+      html += `<div class="etapes-section-title">🌟 Réalisé (${achieved.length})</div><div class="etapes-grid">`;
+      achieved.forEach(e => {
+        const d = etapes[e.key];
+        html += `<div class="etape-card etape-done">
+          <button class="etape-edit-btn" data-key="${e.key}">✏️</button>
+          <div class="etape-icon">${e.icon}</div>
+          <div class="etape-label">${e.label}</div>
+          <div class="etape-date">📅 ${fmtEtapeDate(d.date)}</div>
+          ${d.note ? `<div class="etape-note">"${d.note}"</div>` : ''}
+        </div>`;
+      });
+      html += `</div>`;
+    }
+
+    if (pending.length) {
+      html += `<div class="etapes-section-title" style="margin-top:${achieved.length ? '20px' : '0'}">⏳ À venir (${pending.length})</div><div class="etapes-grid">`;
+      pending.forEach(e => {
+        html += `<div class="etape-card etape-pending">
+          <div class="etape-icon">${e.icon}</div>
+          <div class="etape-label">${e.label}</div>
+          <button class="etape-mark-btn" data-key="${e.key}">Marquer ✓</button>
+        </div>`;
+      });
+      html += `</div>`;
+    }
+
+    document.getElementById('etapes-content').innerHTML = html;
+
+    document.querySelectorAll('.etape-mark-btn').forEach(btn =>
+      btn.addEventListener('click', () => openEtapeModal(btn.dataset.key))
+    );
+    document.querySelectorAll('.etape-edit-btn').forEach(btn =>
+      btn.addEventListener('click', () => openEtapeModal(btn.dataset.key))
+    );
+  }
+
+  function openEtapeModal(key) {
+    etapeEditKey = key;
+    const def      = ETAPES_DEF.find(e => e.key === key);
+    const existing = etapes[key];
+    document.getElementById('etape-modal-title').textContent = def.icon + '  ' + def.label;
+    document.getElementById('etape-date-input').value  = existing ? existing.date : new Date().toISOString().split('T')[0];
+    document.getElementById('etape-note-input').value  = existing ? (existing.note || '') : '';
+    document.getElementById('etape-delete-btn').style.display = existing ? 'block' : 'none';
+    document.getElementById('etape-overlay').style.display = 'flex';
+  }
+
+  function closeEtapeModal() {
+    document.getElementById('etape-overlay').style.display = 'none';
+    etapeEditKey = null;
+  }
+
+  document.getElementById('etape-overlay').addEventListener('click', e => {
+    if (e.target === document.getElementById('etape-overlay')) closeEtapeModal();
+  });
+
+  document.getElementById('etape-save-btn').addEventListener('click', () => {
+    const date = document.getElementById('etape-date-input').value;
+    const note = document.getElementById('etape-note-input').value.trim();
+    if (!date || !etapeEditKey) return;
+    childEtapesRef().child(etapeEditKey).set({ date, note: note || '' });
+    closeEtapeModal();
+  });
+
+  document.getElementById('etape-delete-btn').addEventListener('click', () => {
+    if (!etapeEditKey) return;
+    childEtapesRef().child(etapeEditKey).remove();
+    closeEtapeModal();
+  });
 </script>
 
 </div><!-- /app-content -->
