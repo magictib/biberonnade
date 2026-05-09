@@ -574,12 +574,59 @@
     .msg-empty { text-align: center; color: var(--muted); font-size: .85rem; padding: 30px 20px; }
     .nav-badge { position: absolute; top: 4px; right: 10px; width: 8px; height: 8px; border-radius: 50%; background: #e17055; display: none; }
     #nav-messages { position: relative; }
+
+    /* ── Loading screen ── */
+    #loading-screen {
+      position: fixed; inset: 0; z-index: 9999;
+      background: linear-gradient(145deg, #5a4bd1 0%, #a29bfe 100%);
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      gap: 22px;
+      transition: opacity .5s ease;
+    }
+    #loading-screen.fade-out { opacity: 0; pointer-events: none; }
+    .loading-app-name { font-size: 1.5rem; font-weight: 900; color: #fff; letter-spacing: .02em; }
+    .loading-sub { font-size: .82rem; color: rgba(255,255,255,.72); font-weight: 600; }
+    @keyframes fill-bottle {
+      from { transform: translateY(120px); }
+      to   { transform: translateY(6px); }
+    }
   </style>
 </head>
 <body>
 
+<!-- ══ LOADING SCREEN ══ -->
+<div id="loading-screen">
+  <svg viewBox="0 0 100 200" width="100" height="200" style="filter:drop-shadow(0 8px 24px rgba(0,0,0,.25))">
+    <defs>
+      <clipPath id="bottle-liq-clip">
+        <rect x="18" y="53" width="64" height="120" rx="12"/>
+      </clipPath>
+    </defs>
+    <!-- Liquide animé -->
+    <rect x="18" y="53" width="64" height="120" fill="#b8d8ff"
+          clip-path="url(#bottle-liq-clip)"
+          style="transform:translateY(120px);animation:fill-bottle 2.4s cubic-bezier(.42,0,.15,1) both .15s"/>
+    <!-- Corps du biberon -->
+    <rect x="18" y="53" width="64" height="120" rx="12"
+          fill="rgba(255,255,255,.12)" stroke="rgba(255,255,255,.9)" stroke-width="3"/>
+    <!-- Bague col -->
+    <rect x="30" y="37" width="40" height="18" rx="5"
+          fill="rgba(255,255,255,.18)" stroke="rgba(255,255,255,.9)" stroke-width="2.5"/>
+    <!-- Tétine -->
+    <path d="M44,37 C44,24 50,10 50,10 C50,10 56,24 56,37 Z"
+          fill="rgba(255,255,255,.2)" stroke="rgba(255,255,255,.9)" stroke-width="2.5"/>
+    <!-- Graduations -->
+    <line x1="78" y1="87"  x2="85" y2="87"  stroke="rgba(255,255,255,.55)" stroke-width="1.5"/>
+    <line x1="78" y1="110" x2="85" y2="110" stroke="rgba(255,255,255,.55)" stroke-width="1.5"/>
+    <line x1="78" y1="133" x2="85" y2="133" stroke="rgba(255,255,255,.55)" stroke-width="1.5"/>
+  </svg>
+  <div class="loading-app-name">Biberonnade</div>
+  <div class="loading-sub">Chargement…</div>
+</div>
+
 <!-- ══ AUTH OVERLAY ══ -->
-<div id="auth-overlay">
+<div id="auth-overlay" style="display:none">
   <div class="auth-card">
     <div class="auth-app-name">Biberonnade</div>
     <div class="auth-app-sub">Suivi bébé</div>
@@ -1204,7 +1251,15 @@
     setAuthError('');
   }
 
+  function hideLoadingScreen() {
+    const ls = document.getElementById('loading-screen');
+    if (!ls || ls.style.display === 'none') return;
+    ls.classList.add('fade-out');
+    setTimeout(() => { ls.style.display = 'none'; }, 500);
+  }
+
   auth.onAuthStateChanged(user => {
+    hideLoadingScreen();
     if (user) {
       currentUser = user;
       const ini = user.isAnonymous ? '👤' : (user.email ? user.email[0].toUpperCase() : '?');
