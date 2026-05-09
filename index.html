@@ -180,7 +180,7 @@
     .crois-entry-val { font-weight: 800; font-size: 1rem; color: var(--primary); }
     .crois-entry-date { font-size: .78rem; color: var(--muted); margin-top: 1px; }
     .crois-entry-del { color: #c0392b; cursor: pointer; padding: 0 4px; font-size: 1.1rem; }
-    .chart-scroll-wrap svg { max-width: 100%; }
+    .chart-scroll-wrap svg { max-width: none; }
 
     /* ── Infos ── */
     .infos-page { padding: 16px; max-width: 600px; margin: 0 auto; }
@@ -629,6 +629,10 @@
     <span id="reminder-bain-text">🛁 <strong>Bain</strong></span>
     <button class="reminder-cta" id="reminder-bain-cta">Soins →</button>
   </div>
+  <div id="reminder-pot-poudre" class="reminder-card reminder-bain-alert" style="display:none">
+    <span id="reminder-pot-text">🥛 <strong>Pot de lait</strong></span>
+    <button class="reminder-cta" id="reminder-pot-cta">Soins →</button>
+  </div>
 </div>
 
 <!-- Journal -->
@@ -766,6 +770,21 @@
           <div class="soin-count" id="bain-reminder-count" style="font-size:1.5rem;">2</div>
           <button class="soin-pm soin-plus" id="bain-days-plus">+</button>
         </div>
+      </div>
+
+      <div class="soin-card" style="display:flex; flex-direction:column; gap:10px; margin-top:10px;">
+        <div style="display:flex; align-items:center; gap:14px;">
+          <div style="font-size:1.8rem;">🥛</div>
+          <div style="flex:1;">
+            <div class="soin-label" style="margin-bottom:2px;">Pot de lait en poudre</div>
+            <div style="font-size:.72rem;color:var(--muted)">Date d'ouverture du pot en cours (péremption 28 j)</div>
+          </div>
+        </div>
+        <div style="display:flex; align-items:center; gap:10px;">
+          <input type="date" id="pot-poudre-date" class="birth-date-input" style="flex:1;">
+          <button class="birth-date-btn" id="btn-save-pot-poudre">OK</button>
+        </div>
+        <div id="pot-poudre-info" style="display:none; font-size:.82rem; border-radius:8px; padding:8px 12px;"></div>
       </div>
     </div>
 
@@ -1123,7 +1142,7 @@
   let statPeriod = 7, statMode = 'count';
   let birthDate = new Date(), babyGender = 'garcon';
   let chronoRunning = false, chronoTime = 0, chronoInterval = null, chronoPaused = false;
-  let bainReminderDays = 2;
+  let bainReminderDays = 2, potPoudreDate = null;
   let children = {}, activeChildId = null, fcGender = 'garcon', editChildId = null;
   let currentUser = null, authMode = 'login', croisMode = 'poids', appInterval = null;
   let activeOwnerUid = null, sharedChildren = {}, linkedChildrenListeners = {};
@@ -1424,6 +1443,9 @@
       babyGender = p.gender || 'garcon';
       bainReminderDays = (p.bainReminderDays !== undefined) ? p.bainReminderDays : 2;
       document.getElementById('bain-reminder-count').textContent = bainReminderDays;
+      potPoudreDate = p.potPoudreDate || null;
+      if (potPoudreDate) document.getElementById('pot-poudre-date').value = potPoudreDate;
+      updatePotPoudre();
       renderAge(); checkReminders();
     });
     childMesuresRef().on('value', snap => {
@@ -1788,6 +1810,36 @@
     applyAgeTheme(babyGender);
   }
 
+  function updatePotPoudre() {
+    const infoEl = document.getElementById('pot-poudre-info');
+    if (!infoEl) return;
+    if (!potPoudreDate) { infoEl.style.display = 'none'; return; }
+    const opened   = new Date(potPoudreDate + 'T00:00:00');
+    const expiry   = new Date(opened);
+    expiry.setDate(expiry.getDate() + 28);
+    const daysLeft  = Math.ceil((expiry - Date.now()) / 86400000);
+    const daysSince = Math.floor((Date.now() - opened) / 86400000);
+    const expiryStr = expiry.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
+    let bg, color, msg;
+    if (daysLeft <= 0) {
+      bg = '#ffeaea'; color = '#c0392b';
+      msg = `Expiré depuis ${Math.abs(daysLeft)} jour${Math.abs(daysLeft) !== 1 ? 's' : ''} !`;
+    } else if (daysLeft <= 7) {
+      bg = '#fff0eb'; color = '#a84432';
+      msg = `Expire le ${expiryStr} — <strong>${daysLeft} jour${daysLeft !== 1 ? 's' : ''} restant${daysLeft !== 1 ? 's' : ''}</strong>`;
+    } else if (daysLeft <= 14) {
+      bg = '#fff9e6'; color = '#7a5800';
+      msg = `Expire le ${expiryStr} — ${daysLeft} jours restants`;
+    } else {
+      bg = '#e8faf4'; color = '#006e59';
+      msg = `Expire le ${expiryStr} — ${daysLeft} jours restants`;
+    }
+    infoEl.style.background = bg;
+    infoEl.style.color = color;
+    infoEl.style.display = 'block';
+    infoEl.innerHTML = `Ouvert il y a ${daysSince} jour${daysSince !== 1 ? 's' : ''} · ${msg}`;
+  }
+
   function checkReminders() {
     const now    = new Date();
     const todayK = dateKey(now.toISOString());
@@ -1816,9 +1868,26 @@
       }
     }
 
-    document.getElementById('reminder-vitamines').style.display = showVit  ? 'flex' : 'none';
-    document.getElementById('reminder-bain').style.display      = showBain ? 'flex' : 'none';
-    document.getElementById('reminders-bar').style.display      = (showVit || showBain) ? 'block' : 'none';
+    // Pot de lait en poudre : rappel si ≤ 7 jours avant péremption
+    let showPot = false;
+    if (potPoudreDate) {
+      const opened = new Date(potPoudreDate + 'T00:00:00');
+      const expiry = new Date(opened);
+      expiry.setDate(expiry.getDate() + 28);
+      const daysLeft = Math.ceil((expiry - Date.now()) / 86400000);
+      showPot = daysLeft <= 7;
+      if (showPot) {
+        const msg = daysLeft <= 0
+          ? `expiré depuis ${Math.abs(daysLeft)} jour${Math.abs(daysLeft) !== 1 ? 's' : ''} !`
+          : `expire dans <strong>${daysLeft}</strong> jour${daysLeft !== 1 ? 's' : ''}`;
+        document.getElementById('reminder-pot-text').innerHTML = `🥛 <strong>Pot de lait</strong> — ${msg}`;
+      }
+    }
+
+    document.getElementById('reminder-vitamines').style.display  = showVit  ? 'flex' : 'none';
+    document.getElementById('reminder-bain').style.display       = showBain ? 'flex' : 'none';
+    document.getElementById('reminder-pot-poudre').style.display = showPot  ? 'flex' : 'none';
+    document.getElementById('reminders-bar').style.display       = (showVit || showBain || showPot) ? 'block' : 'none';
   }
 
   function renderSoins() {
@@ -1921,6 +1990,8 @@
       return { key: k, pipi: day.filter(s => s.type === 'pipi').length, caca: day.filter(s => s.type === 'caca').length };
     });
     document.getElementById('soin-chart-svg').innerHTML = buildSoinSVGChart(soinDayStats);
+
+    document.querySelectorAll('#view-stats .chart-scroll-wrap').forEach(w => { w.scrollLeft = w.scrollWidth; });
 
     const withData = [...dayStats].reverse().filter(d => d.total > 0);
     document.getElementById('day-cards').innerHTML = withData.length
@@ -2412,6 +2483,16 @@
 
   document.getElementById('reminder-vit-cta').addEventListener('click',  () => showTab('soins'));
   document.getElementById('reminder-bain-cta').addEventListener('click', () => showTab('soins'));
+  document.getElementById('reminder-pot-cta').addEventListener('click',  () => showTab('soins'));
+
+  document.getElementById('btn-save-pot-poudre').addEventListener('click', () => {
+    const val = document.getElementById('pot-poudre-date').value;
+    if (!val) return;
+    potPoudreDate = val;
+    childProfileRef().update({ potPoudreDate: val });
+    updatePotPoudre();
+    checkReminders();
+  });
 
   document.querySelectorAll('.crois-tab-btn').forEach(btn => {
     btn.addEventListener('click', () => {
