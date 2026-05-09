@@ -588,8 +588,8 @@
     .loading-app-name { font-size: 1.5rem; font-weight: 900; color: #fff; letter-spacing: .02em; }
     .loading-sub { font-size: .82rem; color: rgba(255,255,255,.72); font-weight: 600; }
     @keyframes fill-bottle {
-      from { transform: translateY(120px); }
-      to   { transform: translateY(6px); }
+      from { transform: scaleY(0); }
+      to   { transform: scaleY(1); }
     }
   </style>
 </head>
@@ -606,7 +606,7 @@
     <!-- Liquide animé -->
     <rect x="18" y="53" width="64" height="120" fill="#b8d8ff"
           clip-path="url(#bottle-liq-clip)"
-          style="transform:translateY(120px);animation:fill-bottle 2.4s cubic-bezier(.42,0,.15,1) both .15s" fill="rgba(255,255,255,.88)"/>
+          style="transform-origin:50px 173px;transform:scaleY(0);animation:fill-bottle 2.4s cubic-bezier(.42,0,.15,1) both .15s" fill="rgba(255,255,255,.88)"/>
     <!-- Corps du biberon -->
     <rect x="18" y="53" width="64" height="120" rx="12"
           fill="rgba(255,255,255,.12)" stroke="rgba(255,255,255,.9)" stroke-width="3"/>
