@@ -824,12 +824,20 @@
           <div style="font-size:1.8rem;">🥛</div>
           <div style="flex:1;">
             <div class="soin-label" style="margin-bottom:2px;">Pot de lait en poudre</div>
-            <div style="font-size:.72rem;color:var(--muted)">Date d'ouverture du pot en cours (péremption 28 j)</div>
+            <div style="font-size:.72rem;color:var(--muted)">Date d'ouverture du pot en cours</div>
           </div>
         </div>
         <div style="display:flex; align-items:center; gap:10px;">
           <input type="date" id="pot-poudre-date" class="birth-date-input" style="flex:1;">
           <button class="birth-date-btn" id="btn-save-pot-poudre">OK</button>
+        </div>
+        <div style="display:flex; align-items:center; gap:14px;">
+          <div style="flex:1; font-size:.8rem; color:var(--muted);">Durée de péremption</div>
+          <div class="soin-counter-row">
+            <button class="soin-pm soin-minus" id="pot-perem-minus">−</button>
+            <div class="soin-count" id="pot-perem-count" style="font-size:1.2rem; min-width:48px;">28 j</div>
+            <button class="soin-pm soin-plus" id="pot-perem-plus">+</button>
+          </div>
         </div>
         <div id="pot-poudre-info" style="display:none; font-size:.82rem; border-radius:8px; padding:8px 12px;"></div>
       </div>
@@ -1189,7 +1197,7 @@
   let statPeriod = 7, statMode = 'count';
   let birthDate = new Date(), babyGender = 'garcon';
   let chronoRunning = false, chronoTime = 0, chronoInterval = null, chronoPaused = false;
-  let bainReminderDays = 2, potPoudreDate = null;
+  let bainReminderDays = 2, potPoudreDate = null, potPoudrePeremption = 28;
   let children = {}, activeChildId = null, fcGender = 'garcon', editChildId = null;
   let currentUser = null, authMode = 'login', croisMode = 'poids', appInterval = null;
   let activeOwnerUid = null, sharedChildren = {}, linkedChildrenListeners = {};
@@ -1507,7 +1515,9 @@
       bainReminderDays = (p.bainReminderDays !== undefined) ? p.bainReminderDays : 2;
       document.getElementById('bain-reminder-count').textContent = bainReminderDays;
       potPoudreDate = p.potPoudreDate || null;
+      potPoudrePeremption = (p.potPoudrePeremption !== undefined) ? p.potPoudrePeremption : 28;
       if (potPoudreDate) document.getElementById('pot-poudre-date').value = potPoudreDate;
+      document.getElementById('pot-perem-count').textContent = potPoudrePeremption + ' j';
       updatePotPoudre();
       renderAge(); checkReminders();
     });
@@ -1879,7 +1889,7 @@
     if (!potPoudreDate) { infoEl.style.display = 'none'; return; }
     const opened   = new Date(potPoudreDate + 'T00:00:00');
     const expiry   = new Date(opened);
-    expiry.setDate(expiry.getDate() + 28);
+    expiry.setDate(expiry.getDate() + potPoudrePeremption);
     const daysLeft  = Math.ceil((expiry - Date.now()) / 86400000);
     const daysSince = Math.floor((Date.now() - opened) / 86400000);
     const expiryStr = expiry.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long' });
@@ -1936,7 +1946,7 @@
     if (potPoudreDate) {
       const opened = new Date(potPoudreDate + 'T00:00:00');
       const expiry = new Date(opened);
-      expiry.setDate(expiry.getDate() + 28);
+      expiry.setDate(expiry.getDate() + potPoudrePeremption);
       const daysLeft = Math.ceil((expiry - Date.now()) / 86400000);
       showPot = daysLeft <= 7;
       if (showPot) {
@@ -2555,6 +2565,21 @@
     childProfileRef().update({ potPoudreDate: val });
     updatePotPoudre();
     checkReminders();
+  });
+
+  document.getElementById('pot-perem-minus').addEventListener('click', () => {
+    if (potPoudrePeremption <= 7) return;
+    potPoudrePeremption--;
+    document.getElementById('pot-perem-count').textContent = potPoudrePeremption + ' j';
+    childProfileRef().update({ potPoudrePeremption });
+    updatePotPoudre(); checkReminders();
+  });
+  document.getElementById('pot-perem-plus').addEventListener('click', () => {
+    if (potPoudrePeremption >= 60) return;
+    potPoudrePeremption++;
+    document.getElementById('pot-perem-count').textContent = potPoudrePeremption + ' j';
+    childProfileRef().update({ potPoudrePeremption });
+    updatePotPoudre(); checkReminders();
   });
 
   document.querySelectorAll('.crois-tab-btn').forEach(btn => {
