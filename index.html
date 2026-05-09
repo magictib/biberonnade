@@ -606,7 +606,7 @@
     <!-- Liquide animé -->
     <rect x="18" y="53" width="64" height="120" fill="#b8d8ff"
           clip-path="url(#bottle-liq-clip)"
-          style="transform:translateY(120px);animation:fill-bottle 2.4s cubic-bezier(.42,0,.15,1) both .15s"/>
+          style="transform:translateY(120px);animation:fill-bottle 2.4s cubic-bezier(.42,0,.15,1) both .15s" fill="rgba(255,255,255,.88)"/>
     <!-- Corps du biberon -->
     <rect x="18" y="53" width="64" height="120" rx="12"
           fill="rgba(255,255,255,.12)" stroke="rgba(255,255,255,.9)" stroke-width="3"/>
@@ -1251,15 +1251,17 @@
     setAuthError('');
   }
 
-  function hideLoadingScreen() {
-    const ls = document.getElementById('loading-screen');
-    if (!ls || ls.style.display === 'none') return;
-    ls.classList.add('fade-out');
-    setTimeout(() => { ls.style.display = 'none'; }, 500);
-  }
+  // Animation : 0.15s delay + 2.4s fill + 0.5s fade = 3.05s minimum
+  let _authResolved = false, _authUser = null, _minTimeDone = false;
+  setTimeout(() => { _minTimeDone = true; if (_authResolved) _applyAuth(); }, 3050);
 
-  auth.onAuthStateChanged(user => {
-    hideLoadingScreen();
+  function _applyAuth() {
+    const ls = document.getElementById('loading-screen');
+    if (ls && ls.style.display !== 'none') {
+      ls.classList.add('fade-out');
+      setTimeout(() => { ls.style.display = 'none'; }, 500);
+    }
+    const user = _authUser;
     if (user) {
       currentUser = user;
       const ini = user.isAnonymous ? '👤' : (user.email ? user.email[0].toUpperCase() : '?');
@@ -1273,6 +1275,12 @@
       document.getElementById('auth-overlay').style.display = 'flex';
       document.getElementById('app-content').style.display = 'none';
     }
+  }
+
+  auth.onAuthStateChanged(user => {
+    _authResolved = true;
+    _authUser = user;
+    if (_minTimeDone) _applyAuth();
   });
 
   document.getElementById('auth-submit').addEventListener('click', async () => {
